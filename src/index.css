@@ -7,6 +7,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#main {
+  padding-top: 30px;
+}
+
+.controlpanel {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.selected {
+  background-color: yellow;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
