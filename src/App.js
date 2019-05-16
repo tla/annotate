@@ -18,11 +18,12 @@ class App extends React.Component {
 
     this.textLoadHandler = this.textLoadHandler.bind(this);
     this.textSelectHandler = this.textSelectHandler.bind(this);
+    this.textStyleHandler = this.textStyleHandler.bind(this);
 
     this.state = {
       selectedText: null,
-      selectionStart: "r",
-      selectionEnd: "r",
+      selectionStart: "",
+      selectionEnd: "",
       sectionList: [],
       loadText: []
     };
@@ -33,7 +34,7 @@ class App extends React.Component {
     fetch('/api/sections')
     .then(response => response.json())
     .then(data => this.setState({sectionList: data}))
-    .catch(error => console.log("Error! " + error));
+    .catch(error => alert("Error! " + error));
   }
 
   // Alter the app's state to load the lemma text for the selected section.
@@ -100,6 +101,27 @@ class App extends React.Component {
     }
   }
 
+  textStyleHandler(annotatedStyle) {
+    // Get the list of spans that need to be restyled
+    const range = document.createRange();
+    range.setStart(document.getElementById(this.state.selectionStart), 0);
+    range.setEnd(document.getElementById(this.state.selectionEnd), 0);
+    const frag = range.cloneContents();
+    // Make sure that we only restyle children that are actually spans
+    frag.querySelectorAll('.reading')
+      .forEach(sp => {
+        let el = document.getElementById(sp.id);
+        el.classList.add(annotatedStyle);
+        el.classList.remove('selected');
+      });
+    // Clear our own selection
+    this.setState({
+      selectedText: null,
+      selectionStart: "",
+      selectionEnd: ""
+    });
+  }
+
   render() {
     return (
       <div>
@@ -121,9 +143,11 @@ class App extends React.Component {
                 <ReferenceBox refclass="date" selectedText={this.state.selectedText}/>
               </Col></Row>
               <Row><Col md={12}>
-                <TranslationBox selectedText={this.state.selectedText}
-                  selectionStart={this.state.selectionStart}
-                  selectionEnd={this.state.selectionEnd}
+                <TranslationBox
+                  selectedText={this.state.selectedText}
+                  selectionStart={parseInt(this.state.selectionStart.substring(1))}
+                  selectionEnd={parseInt(this.state.selectionEnd.substring(1))}
+                  annotationAdded={this.textStyleHandler}
                 />
               </Col></Row>
             </Container>

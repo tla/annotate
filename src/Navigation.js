@@ -20,6 +20,7 @@ class Navigation extends React.Component {
           <Nav className="mr-auto">
             <Form name="section-select" >
               <Form.Control as="select" onChange={this.handleChange}>
+              <option key="0" value="">Select a section...</option>
               {this.props.sections.map(s => <option key={s.id} value={s.id} >{s.name}</option>)}
               </Form.Control>
             </Form>

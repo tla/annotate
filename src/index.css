@@ -20,6 +20,10 @@ body {
   background-color: yellow;
 }
 
+.translated {
+  background-color: #FAFAD2;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;

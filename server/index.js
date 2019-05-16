@@ -16,17 +16,24 @@ app.all('/api/*', (req, res) => {
     method: req.method,
     headers: {
       'Accept': 'application/json',
+      'Content-Type': 'application/json',
       'Authorization': 'Basic ' + auth
     }
   };
-  console.log(process.env.STEMMAREST_USER);
+  const url = req.params[0];
+  console.log(req.method + " " + url);
   console.log(req.body);
-  if (req.method.startsWith('P')) {
+  if (req.body && Object.keys(req.body).length) {
     params.body = JSON.stringify(req.body);
   }
 
-  fetch(baseurl + req.params[0], params)
-  .then( response => response.json() )
+  fetch(baseurl + url, params)
+  .then( response => {
+    console.log("Response: " + response.status);
+    // Duplicate the status code and the response content
+    res.status(response.status);
+    return response.json();
+  })
   .then( data => res.json(data) )
   .catch(function(error) {
     res.status(500).json({error: error});
