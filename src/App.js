@@ -3,6 +3,7 @@ import React from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+// import Login from './Login';
 import Navigation from './Navigation';
 import SectionText from './SectionText';
 import ReferenceBox from './ReferenceBox';
@@ -19,11 +20,12 @@ class App extends React.Component {
     this.textLoadHandler = this.textLoadHandler.bind(this);
     this.textSelectHandler = this.textSelectHandler.bind(this);
     this.textStyleHandler = this.textStyleHandler.bind(this);
+    this.annotationAdded = this.annotationAdded.bind(this);
+    this.annotationRemoved = this.annotationRemoved.bind(this);
 
     this.state = {
-      selectedText: null,
-      selectionStart: "",
-      selectionEnd: "",
+      selection: null,
+      annotations: [],
       sectionList: [],
       loadText: []
     };
@@ -34,7 +36,12 @@ class App extends React.Component {
     fetch('/api/sections')
     .then(response => response.json())
     .then(data => this.setState({sectionList: data}))
-    .catch(error => alert("Error! " + error));
+    .catch(error => alert("Error loading sections! " + error));
+
+    fetch('/api/annotations')
+    .then(response => response.json())
+    .then(data => this.setState({annotations: data}))
+    .catch(error => alert("Error loading annotations! " + error));
   }
 
   // Alter the app's state to load the lemma text for the selected section.
@@ -65,61 +72,61 @@ class App extends React.Component {
       if (isReading(anchorSpan) && isReading(targetSpan)) {
         // We will hilight the selected spans and
         // enable buttons to add an annotation
+        const startSpan = anchorSpan.compareDocumentPosition(targetSpan)
+          & Node.DOCUMENT_POSITION_FOLLOWING
+          ? anchorSpan : targetSpan;
+        const endSpan = startSpan === anchorSpan : targetSpan : anchorSpan;
         // First, extend and save the selection we have made
-        sel.setBaseAndExtent(anchorSpan.childNodes[0], 0, targetSpan.childNodes[0], targetSpan.textContent.length);
-        this.setState({
-          selectedText: sel.toString(),
-          selectionStart: anchorSpan.getAttribute('id'),
-          selectionEnd: targetSpan.getAttribute('id')
-        })
-        // First, remove any previous selection
+        sel.setBaseAndExtent(startSpan.childNodes[0], 0, endSpan.childNodes[0], endSpan.textContent.length);
+        this.setState({ selection: {
+          text: sel.toString(),
+          start: startSpan.getAttribute('id'),
+          end: endSpan.getAttribute('id')
+        }});
+        // Then, remove any previous selection
         for (let rspan of document.getElementsByClassName("reading")) {
           rspan.classList.remove("selected");
         }
-
         // Then get the selected spans
         const selected = [];
-        var next = anchorSpan;
-        while(next != null && next.getAttribute("id") !== targetSpan.getAttribute("id")) {
+        var next = startSpan;
+        while(next != null && next.getAttribute("id") !== endSpan.getAttribute("id")) {
           selected.push(next);
           next = next.nextElementSibling;
         }
-        selected.push(targetSpan);
+        selected.push(endSpan);
         selected.forEach( el => el.classList.add("selected"));
 
-        // TODO enable the annotations
-
-        // Finally remove the browser selection
+        // Finally remove the browser selection marker
         sel.removeAllRanges();
       } else {
-        this.setState({
-          selectedText: null,
-          selectionStart: "r",
-          selectionEnd: "r"
-        });
+        this.setState({selection: null});
       }
     }
   }
 
-  textStyleHandler(annotatedStyle) {
-    // Get the list of spans that need to be restyled
-    const range = document.createRange();
-    range.setStart(document.getElementById(this.state.selectionStart), 0);
-    range.setEnd(document.getElementById(this.state.selectionEnd), 0);
-    const frag = range.cloneContents();
-    // Make sure that we only restyle children that are actually spans
-    frag.querySelectorAll('.reading')
-      .forEach(sp => {
-        let el = document.getElementById(sp.id);
-        el.classList.add(annotatedStyle);
-        el.classList.remove('selected');
-      });
-    // Clear our own selection
-    this.setState({
-      selectedText: null,
-      selectionStart: "",
-      selectionEnd: ""
-    });
+  annotationAdded(annotation, doRemoveSelection) {
+    // Add the new annotation to our list and reset the state
+    const annotations = this.state.annotations;
+    const newState = {}
+    if (doRemoveSelection) {
+      newState.selection = null;
+    }
+    if (!annotations.find(x => x.id === annotation.id)) {
+      annotations.push('annotation');
+      newState.annotations = annotations;
+    }
+    if (Object.keys(newState).length) {
+      this.setState(newState);
+    }
+  }
+
+  annotationRemoved(annotation) {
+    // Add the new annotation to our list and reset the state
+    const remaining = this.state.annotations.filter(x => x.id !== annotation.id);
+    if (remaining.length != this.state.annotations.length) {
+      this.setState({annotations: annotations});
+    }
   }
 
   render() {
@@ -129,25 +136,30 @@ class App extends React.Component {
       <Container id="main">
         <Row>
           <Col md={9}>
-            <SectionText textSelectHandler={this.textSelectHandler} readings={this.state.loadText}/>
+            <SectionText
+              textSelectHandler={this.textSelectHandler}
+              readings={this.state.loadText}
+              selection={this.state.selection}
+              annotations={this.state.annotations}
+            />
           </Col>
           <Col>
             <Container className="sticky-top">
               <Row><Col md={12}>
-                <ReferenceBox refclass="person" selectedText={this.state.selectedText}/>
+                <ReferenceBox refclass="person" selection={this.state.selection}/>
               </Col></Row>
               <Row><Col md={12}>
-                <ReferenceBox refclass="place" selectedText={this.state.selectedText}/>
+                <ReferenceBox refclass="place" selection={this.state.selection}/>
               </Col></Row>
               <Row><Col md={12}>
-                <ReferenceBox refclass="date" selectedText={this.state.selectedText}/>
+                <ReferenceBox refclass="date" selection={this.state.selection}/>
               </Col></Row>
               <Row><Col md={12}>
                 <TranslationBox
-                  selectedText={this.state.selectedText}
-                  selectionStart={parseInt(this.state.selectionStart.substring(1))}
-                  selectionEnd={parseInt(this.state.selectionEnd.substring(1))}
-                  annotationAdded={this.textStyleHandler}
+                  selection={this.state.selection}
+                  annotations={this.state.annotations}
+                  annotationAdded={this.annotationAdded}
+                  annotationRemoved={this.annotationRemoved}
                 />
               </Col></Row>
             </Container>

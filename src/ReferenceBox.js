@@ -23,6 +23,7 @@ class ReferenceBox extends React.Component {
   }
 
   render() {
+    const selectedText = this.props.selection ? this.props.selection.text : '';
     return (
       <>
         <Button className="controlpanel" variant="success" size="lg" onClick={this.handleShow}>
@@ -33,7 +34,7 @@ class ReferenceBox extends React.Component {
           <Modal.Header closeButton>
             <Modal.Title>Reference a {this.props.refclass}</Modal.Title>
           </Modal.Header>
-          <Modal.Body><p>{this.props.selectedText}</p></Modal.Body>
+          <Modal.Body><p>{selectedText}</p></Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={this.handleClose}>
               Cancel
