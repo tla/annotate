@@ -30,14 +30,14 @@ function SectionText(props) {
       if (anno.class.endsWith('REF')) {
         classLabel = anno.class.toLowerCase();
       }
-      if (anno.start === rdg.id) {
+      if (anno.start === parseInt(rdg.id)) {
         anno.weAreIn = true;
         spanClasses.push(classLabel + '-start');
       }
       if (anno.weAreIn) {
         spanClasses.push(classLabel);
       }
-      if (anno.end === rdg.id) {
+      if (anno.end === parseInt(rdg.id)) {
         spanClasses.push(classLabel + '-end');
         anno.weAreIn = false;
       }
