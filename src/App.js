@@ -64,7 +64,7 @@ class App extends React.Component {
     .then(response => response.json())
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
-      : this.setState({loadText: data}))
+      : this.setState({loadText: data, selection: null}))
     .catch(error => console.log("Error! " + error));
   }
 
@@ -162,6 +162,7 @@ class App extends React.Component {
                 <ReferenceBox
                   refclass="person"
                   selection={this.state.selection}
+                  annotations={this.state.annotations}
                   spec={this.state.annotationspecs.person}
                 />
               </Col></Row>
@@ -169,6 +170,7 @@ class App extends React.Component {
                 <ReferenceBox
                   refclass="place"
                   selection={this.state.selection}
+                  annotations={this.state.annotations}
                   spec={this.state.annotationspecs.place}
                 />
               </Col></Row>
@@ -176,6 +178,7 @@ class App extends React.Component {
                 <ReferenceBox
                   refclass="date"
                   selection={this.state.selection}
+                  annotations={this.state.annotations}
                   spec={this.state.annotationspecs.date}
                 />
               </Col></Row>

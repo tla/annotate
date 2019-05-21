@@ -21,10 +21,11 @@ body {
 }
 
 .translated {
-  background-color: #FAFAD2;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #AAAA82;
 }
-.translated-start::before {
-  content: "\01F449";
+.translated-start {
 }
 .translated-end::after {
   content: "\01F4AC";

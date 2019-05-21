@@ -3,6 +3,10 @@ import React from 'react';
 function SectionText(props) {
   const els = [];
   let inSelection = false;
+  // Chew up the existing annotations
+  const annotations = digestAnnotations(props.annotations);
+
+  // Iterate through the readings to make the spans
   for (const [idx, rdg] of props.readings.entries()) {
     // Get the span text
     const rdgtext = rdg.normal_form ? rdg.normal_form : rdg.text;
@@ -22,8 +26,6 @@ function SectionText(props) {
     if (props.selection && props.selection.end === 'r' + rdg.id) {
       inSelection = false;
     }
-    // Chew up the existing annotations
-    const annotations = digestAnnotations(props.annotations);
     // Now for each reading, check whether we are in an annotation
     for (let anno of annotations) {
       let classLabel = 'translated';
@@ -54,7 +56,7 @@ function digestAnnotations(annotations) {
   // Transform our list of annotations for an easier reading check
   const annotated = [];
   for (let anno of annotations) {
-    const startLink = anno.links.find(x => x.type === 'START');
+    const startLink = anno.links.find(x => x.type === 'BEGIN');
     const endLink = anno.links.find(x => x.type === 'END')
     const annoInfo = {
       class: anno.label,
@@ -65,4 +67,5 @@ function digestAnnotations(annotations) {
   }
   return annotated;
 }
+
 export default SectionText;
