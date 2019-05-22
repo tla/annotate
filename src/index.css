@@ -16,6 +16,11 @@ body {
   margin-bottom: 20px;
 }
 
+.referenceform > .row {
+  margin-bottom: 20px;
+  border-bottom: 1px black;
+}
+
 .selected {
   background-color: yellow;
 }
@@ -31,22 +36,31 @@ body {
   content: "\01F4AC";
 }
 
-.personref-start::before {
-  content: "\01F449";
+.ref-person {
+  background-color: rgb(209, 146, 76);
+}
+.personref {
+  color: rgb(209, 146, 76);
 }
 .personref-end::after {
   content: "\01F9D1";
 }
 
-.placeref-start::before {
-  content: "\01F449";
+.ref-place {
+  background-color: rgb(68, 131, 170);
+}
+.placeref {
+  color: rgb(68, 131, 170);
 }
 .placeref-end::after {
   content: "\01F5FA";
 }
 
-.dateref-start::before {
-  content: "\01F449";
+.ref-date {
+  background-color: rgb(182, 93, 93);
+}
+.dateref {
+  color: rgb(182, 93, 93);
 }
 .dateref-end::after {
   content: "\01F5D3";

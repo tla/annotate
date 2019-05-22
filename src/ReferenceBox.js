@@ -280,7 +280,7 @@ class ReferenceBox extends React.Component {
 
     return (
       <>
-        <Button className="controlpanel" variant="success" size="lg" onClick={this.handleShow}>
+        <Button className={"controlpanel ref-" + this.props.refclass} size="lg" onClick={this.handleShow}>
           Link to {this.props.refclass}
         </Button>
 
@@ -293,7 +293,7 @@ class ReferenceBox extends React.Component {
             <form name="addReference" id="addReference" action="#">
               {/*TODO make this a useful value*/}
               <input type="hidden" id="ref-authority" name="authority" value="tla"/>
-              <Container>
+              <Container className="referenceform">
                 <Row>
                   <Col md={6}>
                     <input type="radio"
