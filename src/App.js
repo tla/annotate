@@ -38,7 +38,7 @@ class App extends React.Component {
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
       : this.setState({sectionList: data}))
-    .catch(error => alert("Error loading sections! " + error));
+    .catch(error => alert("Error loading sections! " + error.message));
 
     // Initialise the annotations list
     fetch('/api/annotations')
@@ -46,15 +46,20 @@ class App extends React.Component {
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
       : this.setState({annotations: data}))
-    .catch(error => alert("Error loading annotations! " + error));
+    .catch(error => alert("Error loading annotations! " + error.message));
 
-    // TODO Initialise the list of annotation labels
-    // For now, hardcode it
-    this.setState({annotationspecs: {
-      "person": {"name": "PERSON", "properties": {"identifier": "String", "datasource": "String", "href": "String"}, "links": {"PERSONREF": "REFERENCED,POSSIBLY,NAMED"}},
-      "place": {"name": "PLACE", "properties": {"identifier": "String", "datasource": "String", "href": "String", "locatable": "Boolean"}, "links": {"PLACEREF": "REFERENCED"}},
-      "date": {"name": "DATE", "properties": {"notAfter": "LocalDate", "notBefore": "LocalDate"}, "links": {"DATEREF": "REFERENCED", "DATING": "REFERENCED"}}
-    }});
+    // Initialise the list of annotation labels
+    const annotationlabels = {};
+    fetch('/api/annotationlabels')
+    .then(response => response.json())
+    .then(data => {
+      if (data.hasOwnProperty('error')) {
+        Promise.reject(new Error(data.error));
+      }
+      data.forEach(x => annotationlabels[x.name.toLowerCase()] = x);
+      this.setState({annotationspecs: annotationlabels});
+    })
+    .catch(error => alert("Error loading annotation specs! " + error.message));
   }
 
   // Alter the app's state to load the lemma text for the selected section.
