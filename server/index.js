@@ -32,12 +32,22 @@ app.all('/api/*', (req, res) => {
     console.log("Response: " + response.status);
     // Duplicate the status code and the response content
     res.status(response.status);
-    return response.json();
+    // TODO set the appropriate headers
+    // TODO This is a horrible hack that badly needs a debugger!
+    const headerObj = response.headers._headers
+    for (let h of Object.keys(headerObj)) {
+      console.log("Header " + h + ": " + headerObj[h]);
+      if (h.startsWith('content')) {
+        const parts = headerObj[h];
+        console.log(parts);
+        res.append(h, parts[0]);
+      }
+    }
+    // Pass through the response body
+    return response.text();
   })
-  .then( data => res.json(data) )
-  .catch(function(error) {
-    res.status(500).json({error: error});
-  })
+  .then(body => res.send(body))
+  .catch(error => res.status(500).json({error: error.message}));
 });
 
 app.listen(port, () => console.log(`Listening on port ${port}`));

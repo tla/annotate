@@ -157,7 +157,7 @@ class ReferenceBox extends React.Component {
           this.referenceAnnotation();
         }
       })
-      .catch(error => alert("Annotation save error! " + error));
+      .catch(error => alert("Annotation save error! " + error.message));
     }
   }
 
@@ -180,12 +180,12 @@ class ReferenceBox extends React.Component {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(oldLink)
         }).then(response => {
-          if (response.status !== 200) {
+          if (!response.ok) {
             const err = response.json();
             Promise.reject(new Error(err));
           }
           this.linkEntityToRef(this.state.oldAnnotation);
-        }).catch(error => alert("Failed to break old link! " + error));
+        }).catch(error => alert("Failed to break old link! " + error.message));
       } else {
         this.linkEntityToRef(this.state.oldAnnotation);
       }
@@ -212,7 +212,7 @@ class ReferenceBox extends React.Component {
       .then(data => data.hasOwnProperty('error')
         ? Promise.reject(new Error(data.error))
         : this.linkEntityToRef(data))
-      .catch(error => alert("Reference annotation save error! " + error))
+      .catch(error => alert("Reference annotation save error! " + error.message))
     }
   }
 
@@ -227,7 +227,16 @@ class ReferenceBox extends React.Component {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(newLink)
-    }).then(response => response.json())
+    }).then(response => {
+      if (!response.ok) {
+        const err = response.json();
+        Promise.reject(new Error(err));
+      } else {
+        this.handleClose();
+        this.props.annotationsAdded([referenceAnnotation, this.state.selectedEntity], true);
+      }
+    })
+    .catch(error => alert("Reference link save error! " + error.message))
   }
 
   render() {

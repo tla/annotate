@@ -164,6 +164,7 @@ class App extends React.Component {
                   selection={this.state.selection}
                   annotations={this.state.annotations}
                   spec={this.state.annotationspecs.person}
+                  annotationsAdded={this.annotationsAdded}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -172,6 +173,7 @@ class App extends React.Component {
                   selection={this.state.selection}
                   annotations={this.state.annotations}
                   spec={this.state.annotationspecs.place}
+                  annotationsAdded={this.annotationsAdded}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -180,6 +182,7 @@ class App extends React.Component {
                   selection={this.state.selection}
                   annotations={this.state.annotations}
                   spec={this.state.annotationspecs.date}
+                  annotationsAdded={this.annotationsAdded}
                 />
               </Col></Row>
               <Row><Col md={12}>
