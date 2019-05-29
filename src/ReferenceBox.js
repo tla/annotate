@@ -36,6 +36,7 @@ class ReferenceBox extends React.Component {
     this.state = {
       show: false,
       suggestions: [],
+      linkTypes: [],
       newOrExisting: 'existing'
     };
   }
@@ -47,12 +48,13 @@ class ReferenceBox extends React.Component {
       oldReference: null,
       inputValue: '',
       suggestions: [],
+      linkTypes: []
     });
   }
 
   anchoredToReference = (annotation, refid, linktype) => {
     const ourLink = annotation.links.find(x =>
-      x.type === linktype && x.target === refid);
+      x.type === linktype && x.target === parseInt(refid));
     return ourLink && annotation.label === this.props.refclass.toUpperCase();
   }
 
@@ -61,20 +63,38 @@ class ReferenceBox extends React.Component {
     if (this.props.selection) {
       // We will show the dialog box
       const label = this.entitylabel;
-      // Fish out any relevant old annotation
+      // Fish out any relevant existing annotation
       const beginId = this.props.selection.start.replace('r', '');
-      const endId = this.props.selection.start.replace('r', '');
+      const endId = this.props.selection.end.replace('r', '');
       const oldAnnotation = this.props.annotations.find(x =>
           x.label === this.referencelabel && anchoredToReadingSpan(x, beginId, endId));
       // Get the list of autocomplete suggestions for the reference
       const entities = this.props.annotations
         .filter(x => x.label === label);
+      // Get the list of possible link types between the entity and the reference
+      const linkTypes = [];
+      if (this.props.spec) {
+        Object.values(this.props.spec.links).forEach( st => {
+          st.split(',')
+            .filter(x => !linkTypes.includes(x))
+            .forEach(x => linkTypes.push(x));
+        });
+      }
+      linkTypes.sort();
+      // Fish out any relevant existing linked entity
+      let oldReference;
+      if (oldAnnotation) {
+        oldReference = this.getOldLinkedEntity(linkTypes[0], oldAnnotation);
+      }
       // Set the state
       this.setState({
         show: true,
         oldAnnotation: oldAnnotation,
-        inputValue: '',
+        inputValue: oldReference ? oldReference.id : '',
         entities: entities,
+        linkTypes: linkTypes,
+        linkType: linkTypes[0],
+        oldReference: oldReference,
         suggestions: [],
         newOrExisting: 'existing'
       });
@@ -83,14 +103,19 @@ class ReferenceBox extends React.Component {
 
   setLinkType = event => {
     const linkType = event.target.value;
-    const newState = {linkType: linkType};
+    let linkedEntity;
     if (this.state.oldAnnotation) {
-      const oldReference = this.props.annotations.find(x =>
-        this.anchoredToReference(x, this.state.oldAnnotation.id, linkType));
-      newState.oldReference = oldReference;
+      linkedEntity = this.getOldLinkedEntity(linkType, this.state.oldAnnotation);
     }
-    this.setState(newState);
+    this.setState({
+      linkType: linkType,
+      oldReference: linkedEntity
+    })
   };
+
+  getOldLinkedEntity = (linktype, annotation) =>
+    this.props.annotations.find(x =>
+      this.anchoredToReference(x, annotation.id, linktype));
 
   // Deal with switch between new and existing pane
   collectNewTarget = event => this.setState({newOrExisting: 'new'});
@@ -126,7 +151,7 @@ class ReferenceBox extends React.Component {
     );
   }
 
-  getSuggestionValue = suggestion => suggestion.id;
+  getSuggestionValue = suggestion => suggestion.properties.identifier;
   renderSuggestion = suggestion => suggestion.properties.identifier;
   onChange = (event, { newValue }) => this.setState({inputValue: newValue});
   onSuggestionsClearRequested = () => this.setState({suggestions: []});
@@ -285,16 +310,7 @@ class ReferenceBox extends React.Component {
       />;
     }
 
-    const linkTypes = [];
-    if (this.props.spec) {
-      Object.values(this.props.spec.links).forEach( st => {
-        st.split(',')
-          .filter(x => !linkTypes.includes(x))
-          .forEach(x => linkTypes.push(x));
-      });
-    }
-    linkTypes.sort();
-    const linkTypeSelect = linkTypes.map(
+    const linkTypeSelect = this.state.linkTypes.map(
       l => <option key={'link-' + l} value={l}>{l}</option>);
 
     return (
