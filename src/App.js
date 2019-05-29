@@ -9,10 +9,33 @@ import SectionText from './SectionText';
 import ReferenceBox from './ReferenceBox';
 import TranslationBox from './TranslationBox';
 
+// ---- Utility functions
+
+// Is the (span) element a reading?
 function isReading(el) {
   return el.classList.contains('reading');
 }
 
+// Is the given annotation anchored to the given start and end readings?
+function isAnchoredToReadingSpan(annotation, startId, endId) {
+  const rdgstart = parseInt(startId.replace('r', ''));
+  const rdgend = parseInt(endId.replace('r', ''));
+  const beginLink = annotation.links
+    .find(x => x.type === 'BEGIN' && x.target === rdgstart);
+  const endLink = annotation.links
+    .find(x => x.type === 'END' && x.target === rdgend);
+  return beginLink && endLink;
+}
+
+// Is the given entity anchored to the given annotation (reference)? Return
+// the link type if so, otherwise null.
+function entityLinkedAs(annotation, refid) {
+  const ourLink = annotation.links.find(x => x.target === parseInt(refid));
+  return ourLink ? ourLink.type : null;
+}
+
+
+// The main event
 class App extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -25,7 +48,7 @@ class App extends React.Component {
     this.state = {
       selection: null,
       annotations: [],
-      annotationspecs: [],
+      annotationspecs: {},
       sectionList: [],
       loadText: []
     };
@@ -90,6 +113,7 @@ class App extends React.Component {
         targetSpan = sel.focusNode.parentElement;
       }
       if (isReading(anchorSpan) && isReading(targetSpan)) {
+        const newState = {};
         // We will hilight the selected spans and
         // enable buttons to add an annotation
         const startSpan = anchorSpan.compareDocumentPosition(targetSpan)
@@ -98,11 +122,30 @@ class App extends React.Component {
         const endSpan = startSpan === anchorSpan ? targetSpan : anchorSpan;
         // First, extend and save the selection we have made
         sel.setBaseAndExtent(startSpan.childNodes[0], 0, endSpan.childNodes[0], endSpan.textContent.length);
-        this.setState({ selection: {
+        const beginId = startSpan.getAttribute('id');
+        const endId = endSpan.getAttribute('id');
+        newState.selection = {
           text: sel.toString(),
-          start: startSpan.getAttribute('id'),
-          end: endSpan.getAttribute('id')
-        }});
+          start: beginId,
+          end: endId
+        }
+        // Then look up any existing annotation(s) on this selection
+        // TODO this assumes that the selection will only have a single reference
+        // annotation, though it might link multiple entities.
+        const selectionAnnotation = this.state.annotations.find(
+          x => isAnchoredToReadingSpan(x, beginId, endId));
+        const selectionEntities = {};
+        if (selectionAnnotation) {
+          this.state.annotations.forEach(x => {
+            const link = entityLinkedAs(x, selectionAnnotation.id);
+            if (link) {
+              selectionEntities[link] = x;
+            }
+          });
+        }
+        newState.selectionEntities = selectionEntities;
+        this.setState(newState);
+
         // Then, remove any previous selection
         for (let rspan of document.getElementsByClassName("reading")) {
           rspan.classList.remove("selected");
@@ -125,11 +168,22 @@ class App extends React.Component {
     }
   }
 
+  getExisting = annolabel => this.state.annotations.filter(
+    x => x.label === annolabel);
+  getAnnotationSpec = label => this.state.annotationspecs.hasOwnProperty(label)
+    ? this.state.annotationspecs[label] : {};
+
   annotationsAdded(annolist, doRemoveSelection) {
     // Add the new annotation to our list and reset the state
     const annotations = [...this.state.annotations];
     annolist.forEach( a => {
-      if (!annotations.find(x => x.id === a.id)) {
+      // Does it exist?
+      const aidx = annotations.findIndex(x => x.id === a.id);
+      if (aidx > -1) {
+        // Replace it; the links might have updated
+        annotations[aidx] = a;
+      } else {
+        // Add it
         annotations.push(a);
       }
     });
@@ -165,39 +219,61 @@ class App extends React.Component {
             <Container className="sticky-top">
               <Row><Col md={12}>
                 <ReferenceBox
-                  refclass="person"
+                  authority="tla"
+                  buttontext="Tag a person"
                   selection={this.state.selection}
+                  oldReference={this.state.selectionAnnotation}
+                  linkedEntities={this.state.selectionEntities}
+                  suggestionList={this.getExisting('PERSON')}
                   annotations={this.state.annotations}
-                  spec={this.state.annotationspecs.person}
+                  spec={this.getAnnotationSpec('person')}
+                  refspec={this.getAnnotationSpec('personref')}
                   annotationsAdded={this.annotationsAdded}
+                  annotationRemoved={this.annotationRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
                 <ReferenceBox
-                  refclass="place"
+                  authority="tla"
+                  buttontext="Tag a place"
                   selection={this.state.selection}
-                  annotations={this.state.annotations}
-                  spec={this.state.annotationspecs.place}
+                  oldReference={this.state.selectionAnnotation}
+                  linkedEntities={this.state.selectionEntities}
+                  suggestionList={this.getExisting('PLACE')}
+                  spec={this.getAnnotationSpec('place')}
+                  refspec={this.getAnnotationSpec('placeref')}
                   annotationsAdded={this.annotationsAdded}
+                  annotationRemoved={this.annotationRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
                 <ReferenceBox
-                  refclass="date"
+                  authority="tla"
+                  buttontext="Tag a date"
                   selection={this.state.selection}
+                  oldReference={this.state.selectionAnnotation}
+                  linkedEntities={this.state.selectionEntities}
+                  suggestionList={this.getExisting('DATE')}
                   annotations={this.state.annotations}
-                  spec={this.state.annotationspecs.date}
+                  spec={this.getAnnotationSpec('date')}
+                  refspec={this.getAnnotationSpec('dateref')}
                   annotationsAdded={this.annotationsAdded}
+                  annotationRemoved={this.annotationRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
                 <ReferenceBox
-                  refclass="dating"
+                  authority="tla"
+                  buttontext="Date an episode"
                   selection={this.state.selection}
+                  oldReference={this.state.selectionAnnotation}
+                  linkedEntities={this.state.selectionEntities}
+                  suggestionList={this.getExisting('DATE')}
                   annotations={this.state.annotations}
-                  spec={this.state.annotationspecs.date}
-                  refspec={this.state.annotationspecs.dating}
+                  spec={this.getAnnotationSpec('date')}
+                  refspec={this.getAnnotationSpec('dating')}
                   annotationsAdded={this.annotationsAdded}
+                  annotationRemoved={this.annotationRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>

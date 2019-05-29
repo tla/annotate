@@ -7,71 +7,42 @@ import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import PropertyForm from './PropertyForm';
 
-// Utility functions
-function anchoredToReadingSpan(annotation, rdgstart, rdgend) {
-  const beginLink = annotation.links
-    .find(x => x.type === 'BEGIN' && x.target === parseInt(rdgstart));
-  const endLink = annotation.links
-    .find(x => x.type === 'END' && x.target === parseInt(rdgend));
-  return beginLink && endLink;
+const defaultState = {
+  show: false,
+  suggestions: [],
+  linkTypes: [],
+  inputValue: '',
+  willCreateNew: false
+  // Other state variables used:
+  // selectedEntity
+  // entityFormValues
+  // referenceFormValues
 }
 
 class ReferenceBox extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    // Bind the instance methods
     this.handleShow = this.handleShow.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.getSuggestions = this.getSuggestions.bind(this);
-    this.updateAnnotation = this.updateAnnotation.bind(this);
+    this.updateOrCreateEntity = this.updateOrCreateEntity.bind(this);
     this.referenceAnnotation = this.referenceAnnotation.bind(this);
     this.linkEntityToRef = this.linkEntityToRef.bind(this);
 
-    // Set some instance constants
-    this.entitylabel = props.refclass === 'dating'
-      ? 'DATE' : props.refclass.toUpperCase();
-    this.referencelabel = props.refclass === 'dating'
-      ? 'DATING' : this.entitylabel + 'REF';
-
-    this.state = {
-      show: false,
-      suggestions: [],
-      linkTypes: [],
-      newOrExisting: 'existing'
-    };
+    // This state handles show/hide of Modal, form display toggle, and state for Autosuggest
+    this.state = defaultState;
   }
 
   handleClose() {
-    this.setState({
-      show: false,
-      oldAnnotation: null,
-      oldReference: null,
-      inputValue: '',
-      suggestions: [],
-      linkTypes: []
-    });
-  }
-
-  anchoredToReference = (annotation, refid, linktype) => {
-    const ourLink = annotation.links.find(x =>
-      x.type === linktype && x.target === parseInt(refid));
-    return ourLink && annotation.label === this.props.refclass.toUpperCase();
+    this.setState(defaultState);
   }
 
   handleShow() {
     // Only react if there is a selection
     if (this.props.selection) {
       // We will show the dialog box
-      const label = this.entitylabel;
-      // Fish out any relevant existing annotation
-      const beginId = this.props.selection.start.replace('r', '');
-      const endId = this.props.selection.end.replace('r', '');
-      const oldAnnotation = this.props.annotations.find(x =>
-          x.label === this.referencelabel && anchoredToReadingSpan(x, beginId, endId));
-      // Get the list of autocomplete suggestions for the reference
-      const entities = this.props.annotations
-        .filter(x => x.label === label);
-      // Get the list of possible link types between the entity and the reference
       const linkTypes = [];
       if (this.props.spec) {
         Object.values(this.props.spec.links).forEach( st => {
@@ -81,47 +52,30 @@ class ReferenceBox extends React.Component {
         });
       }
       linkTypes.sort();
-      // Fish out any relevant existing linked entity
-      let oldReference;
-      if (oldAnnotation) {
-        oldReference = this.getOldLinkedEntity(linkTypes[0], oldAnnotation);
-      }
+      // Do we have an existing linked entity of our default link type?
+      const oldReference = this.props.linkedEntities[linkTypes[0]];
       // Set the state
       this.setState({
         show: true,
-        oldAnnotation: oldAnnotation,
-        inputValue: oldReference ? oldReference.id : '',
-        entities: entities,
         linkTypes: linkTypes,
         linkType: linkTypes[0],
-        oldReference: oldReference,
-        suggestions: [],
-        newOrExisting: 'existing'
+        inputValue: oldReference ? oldReference.properties.identifier : '',
       });
     }
   }
 
-  setLinkType = event => {
-    const linkType = event.target.value;
-    let linkedEntity;
-    if (this.state.oldAnnotation) {
-      linkedEntity = this.getOldLinkedEntity(linkType, this.state.oldAnnotation);
-    }
-    this.setState({
-      linkType: linkType,
-      oldReference: linkedEntity
-    })
-  };
-
-  getOldLinkedEntity = (linktype, annotation) =>
-    this.props.annotations.find(x =>
-      this.anchoredToReference(x, annotation.id, linktype));
+  // This is called when the link type dropdown is changed
+  setLinkType = event => this.setState({ linkType: event.target.value });
+  // This is a utility function for getting the existing (old) linked entity
+  // according to whichever link type is currently selected
+  getEntityForLinkType = () => this.props.linkedEntities[this.state.linkType]
 
   // Deal with switch between new and existing pane
-  collectNewTarget = event => this.setState({newOrExisting: 'new'});
-  showExistingTargets = event => this.setState({newOrExisting: 'existing'})
+  collectNewTarget = event => this.setState({willCreateNew: true});
+  showExistingTargets = event => this.setState({willCreateNew: false})
 
   // Deal with entries in the forms produced by <PropertyForm/>
+  // TODO revisit this
   recordFormValue = (event, statevar) => {
     const formValues = this.state[statevar]
       ? this.state[statevar] : {};
@@ -146,14 +100,14 @@ class ReferenceBox extends React.Component {
   getSuggestions(value) {
     const inputValue = value.trim().toLowerCase();
     const inputLength = inputValue.length;
-    return inputLength === 0 ? [] : this.state.entities.filter(
-      x => x.properties.identifier.toLowerCase().slice(0, inputLength) === inputValue
+    return inputLength === 0 ? [] : this.props.suggestionList.filter(
+      x => x.properties.identifier.toLowerCase().includes(inputValue)
     );
   }
 
   getSuggestionValue = suggestion => suggestion.properties.identifier;
   renderSuggestion = suggestion => suggestion.properties.identifier;
-  onChange = (event, { newValue }) => this.setState({inputValue: newValue});
+  updateSelected = (event, { newValue }) => this.setState({inputValue: newValue});
   onSuggestionsClearRequested = () => this.setState({suggestions: []});
   onSuggestionsFetchRequested = ({ value }) =>
     this.setState({suggestions: this.getSuggestions(value)});
@@ -161,25 +115,32 @@ class ReferenceBox extends React.Component {
     this.setState({selectedEntity: suggestion});
 
 
-  // Make the changes and update the parent state with any new annotations
-  updateAnnotation() {
-    // Do we have an existing entity?
+  // --- Make the changes and update the parent state with any new annotations
+
+  // We start with ensuring that the entity exists and is not already linked
+  // to this span of text.
+  updateOrCreateEntity() {
+    // Have we selected an existing entity?
     if (this.state.selectedEntity) {
-      // Do we need to make any changes at all?
-      if (this.state.oldAnnotation && this.anchoredToReference(
-          this.state.selectedEntity, this.state.oldAnnotation.id)) {
+      // If the selected entity is already linked to the existing (old)
+      // reference annotation, then we don't need to make any changes at all.
+      const linkedEntity = this.getEntityForLinkType();
+      if (linkedEntity && linkedEntity.id === this.state.selectedEntity.id) {
         this.handleClose();
         return;
       }
+      // Otherwise we should set up the reference to the selected entity.
       this.referenceAnnotation();
-    } else {
+
+    // Otherwise...
+    } else if (this.state.willCreateNew) {
       // We need to make the entity first.
       if (!this.state.entityFormValues.identifier) {
         alert("Cannot create a new entity without an identifier!");
         return;
       }
       const newEntity = {
-        label: this.entitylabel,
+        label: this.props.spec.name,
         properties: this.state.entityFormValues
       };
       fetch('/api/annotation', {
@@ -200,6 +161,8 @@ class ReferenceBox extends React.Component {
     }
   }
 
+  // The entity to be linked is now stored in state.selectedEntity; here
+  // we make sure that the reference annotation exists.
   referenceAnnotation() {
     // At this point we should have an entity to reference.
     if (!this.state.selectedEntity) {
@@ -207,12 +170,16 @@ class ReferenceBox extends React.Component {
       return;
     }
     // Do we have an existing reference annotation?
-    if (this.state.oldAnnotation) {
-      // Use the THINGREF we have already made; delete its old referent first
-      const oldEntity = this.state.oldEntity;
+    if (this.props.oldReference) {
+      const oldEntity = this.getEntityForLinkType();
+      // We already know that oldEntity is not selectedEntity; otherwise
+      // we would have already been finished. Delete the link between
+      // oldEntity and oldReference.
       const url = '/api/annotation/' + oldEntity.properties.id + '/link';
       const oldLink = oldEntity.links.find(x =>
-        x.target === this.state.oldAnnotation.id && x.type === 'REFERENCED');
+        x.target === this.props.oldReference.id
+        && x.type === this.state.linkType);
+      // If an old link exists, delete it and re-link to the new entity
       if (oldLink) {
         fetch (url, {
           method: 'DELETE',
@@ -223,17 +190,19 @@ class ReferenceBox extends React.Component {
             const err = response.json();
             Promise.reject(new Error(err));
           }
-          this.linkEntityToRef(this.state.oldAnnotation);
+          this.linkEntityToRef(this.props.oldReference, oldEntity);
         }).catch(error => alert("Failed to break old link! " + error.message));
+
+      // Otherwise just re-link to the new entity
       } else {
-        this.linkEntityToRef(this.state.oldAnnotation);
+        this.linkEntityToRef(this.props.oldReference);
       }
     } else {
-      // Make a new THINGREF
+      // We will need a new reference annotation.
       const beginId = this.props.selection.start.replace('r', '');
       const endId = this.props.selection.end.replace('r', '');
       const newRef = {
-        label: this.referencelabel,
+        label: this.props.refspec.name,
         links: [
           {type: 'BEGIN', target: parseInt(beginId)},
           {type: 'END', target: parseInt(endId)}
@@ -243,10 +212,10 @@ class ReferenceBox extends React.Component {
       if (this.state.referenceFormValues) {
         newRef.properties = this.state.referenceFormValues;
       } else {
-        newRef.properties = {
-          authority: document.getElementById('ref-authority').value
-        }
+        // There always has to be an authority.
+        newRef.properties = { authority: this.props.authority }
       }
+      // Make the reference...
       fetch('/api/annotation', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -255,29 +224,35 @@ class ReferenceBox extends React.Component {
       .then(response => response.json())
       .then(data => data.hasOwnProperty('error')
         ? Promise.reject(new Error(data.error))
-        : this.linkEntityToRef(data))
+        : this.linkEntityToRef(data)) // ...and link it.
       .catch(error => alert("Reference annotation save error! " + error.message))
     }
   }
 
-  linkEntityToRef(referenceAnnotation) {
+  // We now definitely have an entity node and a reference node, which are
+  // definitely unlinked, so link them together.
+  linkEntityToRef(referenceAnnotation, alsoUpdated) {
     const entity = this.state.selectedEntity;
     const url = '/api/annotation/' + entity.id + '/link';
     const newLink = {
-      type: 'REFERENCED',
+      type: this.state.linkType,
       target: referenceAnnotation.id
     };
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(newLink)
-    }).then(response => {
-      if (!response.ok) {
-        const err = response.json();
-        Promise.reject(new Error(err));
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.hasOwnProperty('error')) {
+        Promise.reject(new Error(data.error));
       } else {
         this.handleClose();
-        this.props.annotationsAdded([referenceAnnotation, this.state.selectedEntity], true);
+        // Send the new bzw. updated annotations to the parent
+        const updated = [referenceAnnotation, data];
+        if (alsoUpdated) { updated.push(alsoUpdated) };
+        this.props.annotationsAdded(updated, true);
       }
     })
     .catch(error => alert("Reference link save error! " + error.message))
@@ -285,29 +260,46 @@ class ReferenceBox extends React.Component {
 
   render() {
     const selectedText = this.props.selection ? this.props.selection.text : '';
+    const refclass = this.props.refspec.hasOwnProperty('name') ?
+      this.props.refspec.name.toLowerCase().replace('ref', '') : '';
     const inputProps = {
-      placeholder: 'Select a ' + this.entitylabel.toLowerCase(),
+      placeholder: 'Select a ' + refclass,
       value: this.state.inputValue,
-      onChange: this.onChange
+      onChange: this.updateSelected
     };
 
+    // targetSelect contains the HTML either for selecting an existing entity,
+    // or for adding a new one.
     let targetSelect;
-    if (this.state.newOrExisting === 'new') {
+    if (this.state.willCreateNew) {
       targetSelect = <PropertyForm
         spec={this.props.spec}
-        existing={this.state.oldReference}
+        existing={this.getEntityForLinkType()}
         recordFormValue={this.recordEntityFormValue}
       />;
     } else {
-      targetSelect = <Autosuggest
-        suggestions={this.state.suggestions}
-        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-        getSuggestionValue={this.getSuggestionValue}
-        renderSuggestion={this.renderSuggestion}
-        onSuggestionSelected={this.onSuggestionSelected}
-        inputProps={inputProps}
-      />;
+      targetSelect = (
+        <Container>
+          <Row>
+            <Col md={3}>
+              <label htmlFor="entity-autosuggest">Link to: </label>
+            </Col>
+            <Col md={9}>
+              <Autosuggest
+                id="entity-autosuggest"
+                suggestions={this.state.suggestions}
+                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+                getSuggestionValue={this.getSuggestionValue}
+                renderSuggestion={this.renderSuggestion}
+                onSuggestionSelected={this.onSuggestionSelected}
+                inputProps={inputProps}
+              />
+            </Col>
+          </Row>
+        </Container>
+      );
+
     }
 
     const linkTypeSelect = this.state.linkTypes.map(
@@ -315,34 +307,37 @@ class ReferenceBox extends React.Component {
 
     return (
       <>
-        <Button className={"controlpanel ref-" + this.props.refclass} size="lg" onClick={this.handleShow}>
-          {this.props.refclass === 'dating' ? 'Date an episode' : 'Link to ' + this.props.refclass}
+        <Button
+          className={"controlpanel ref-" + refclass}
+          size="lg"
+          onClick={this.handleShow}
+          disabled={this.props.selection ? false : true}
+        >
+          {this.props.buttontext}
         </Button>
 
         <Modal show={this.state.show} onHide={this.handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Reference a {this.entitylabel.toLowerCase()}</Modal.Title>
+            <Modal.Title>Reference a {refclass}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p>{selectedText}</p>
             <form name="addReference" id="addReference" action="#">
-              {/*TODO make this a useful value*/}
-              <input type="hidden" id="ref-authority" name="authority" value="tla"/>
               <Container className="referenceform">
                 <Row>
                   <Col md={6}>
                     <input type="radio"
                       onChange={this.showExistingTargets}
-                      checked={this.state.newOrExisting === 'existing'}
+                      checked={!this.state.willCreateNew}
                     />
-                    <label htmlFor={"existing-" + this.props.refclass}> Link to existing </label>
+                    <label htmlFor={"existing-" + refclass}> Link to existing </label>
                   </Col>
                   <Col md={6}>
                     <input type="radio"
                       onChange={this.collectNewTarget}
-                      checked={this.state.newOrExisting === 'new'}
+                      checked={this.state.willCreateNew}
                     />
-                  <label htmlFor={"new-" + this.props.refclass}> Create new </label>
+                  <label htmlFor={"new-" + refclass}> Create new </label>
                   </Col>
                 </Row>
                 <Row>
@@ -369,7 +364,7 @@ class ReferenceBox extends React.Component {
             <Button variant="secondary" onClick={this.handleClose}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={this.updateAnnotation}>
+            <Button variant="primary" onClick={this.updateOrCreateEntity}>
               Save Reference
             </Button>
           </Modal.Footer>
