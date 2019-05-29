@@ -42,7 +42,7 @@ function PropertyForm(props) {
       );
   });
   return(
-    <Container>
+    <Container className="propertybox">
       {formrows}
     </Container>
   )

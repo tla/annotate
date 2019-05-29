@@ -279,7 +279,7 @@ class ReferenceBox extends React.Component {
       />;
     } else {
       targetSelect = (
-        <Container>
+        <Container className="propertybox">
           <Row>
             <Col md={3}>
               <label htmlFor="entity-autosuggest">Link to: </label>
@@ -342,11 +342,13 @@ class ReferenceBox extends React.Component {
                 </Row>
                 <Row>
                   <Col md={12}>
+                    <h4>Entity properties</h4>
                     {targetSelect}
                   </Col>
                 </Row>
                 <Row>
                   <Col md={12}>
+                    <h4>Reference properties</h4>
                     {this.props.refspec ?
                       <PropertyForm
                         spec={this.props.refspec}
