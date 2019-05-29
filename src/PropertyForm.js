@@ -3,7 +3,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
-function NewEntity(props) {
+function PropertyForm(props) {
   const formrows = [];
   Object.entries(props.spec.properties).forEach(([k, v]) => {
     const label = <label key={k + "Label"} htmlFor={k + "Input"}>{k}</label>;
@@ -32,4 +32,4 @@ function NewEntity(props) {
   )
 }
 
-export default NewEntity;
+export default PropertyForm;

@@ -191,6 +191,16 @@ class App extends React.Component {
                 />
               </Col></Row>
               <Row><Col md={12}>
+                <ReferenceBox
+                  refclass="dating"
+                  selection={this.state.selection}
+                  annotations={this.state.annotations}
+                  spec={this.state.annotationspecs.date}
+                  refspec={this.state.annotationspecs.dating}
+                  annotationsAdded={this.annotationsAdded}
+                />
+              </Col></Row>
+              <Row><Col md={12}>
                 <TranslationBox
                   selection={this.state.selection}
                   annotations={this.state.annotations}

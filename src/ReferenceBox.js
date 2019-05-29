@@ -5,7 +5,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
-import NewEntity from './NewEntity';
+import PropertyForm from './PropertyForm';
 
 // Utility functions
 function anchoredToReadingSpan(annotation, rdgstart, rdgend) {
@@ -26,6 +26,12 @@ class ReferenceBox extends React.Component {
     this.updateAnnotation = this.updateAnnotation.bind(this);
     this.referenceAnnotation = this.referenceAnnotation.bind(this);
     this.linkEntityToRef = this.linkEntityToRef.bind(this);
+
+    // Set some instance constants
+    this.entitylabel = props.refclass === 'dating'
+      ? 'DATE' : props.refclass.toUpperCase();
+    this.referencelabel = props.refclass === 'dating'
+      ? 'DATING' : this.entitylabel + 'REF';
 
     this.state = {
       show: false,
@@ -54,15 +60,15 @@ class ReferenceBox extends React.Component {
     // Only react if there is a selection
     if (this.props.selection) {
       // We will show the dialog box
-      const label = this.props.refclass.toUpperCase();
+      const label = this.entitylabel;
       // Fish out any relevant old annotation
       const beginId = this.props.selection.start.replace('r', '');
       const endId = this.props.selection.start.replace('r', '');
       const oldAnnotation = this.props.annotations.find(x =>
-          x.label === label + 'REF' && anchoredToReadingSpan(x, beginId, endId));
+          x.label === this.referencelabel && anchoredToReadingSpan(x, beginId, endId));
       // Get the list of autocomplete suggestions for the reference
       const entities = this.props.annotations
-        .filter(x => x.label === this.props.refclass.toUpperCase());
+        .filter(x => x.label === label);
       // Set the state
       this.setState({
         show: true,
@@ -90,9 +96,10 @@ class ReferenceBox extends React.Component {
   collectNewTarget = event => this.setState({newOrExisting: 'new'});
   showExistingTargets = event => this.setState({newOrExisting: 'existing'})
 
-  // Deal with entries in the new-entity form
-  recordFormValue = (event) => {
-    const formValues = this.state.formValues ? this.state.formValues : {};
+  // Deal with entries in the forms produced by <PropertyForm/>
+  recordFormValue = (event, statevar) => {
+    const formValues = this.state[statevar]
+      ? this.state[statevar] : {};
     const formField = event.target.getAttribute('name');
     // TODO validate data types using the annotation spec
     if (event.target.getAttribute('type') === 'checkbox') {
@@ -100,7 +107,14 @@ class ReferenceBox extends React.Component {
     } else {
       formValues[formField] = event.target.value;
     }
-    this.setState({formValues: formValues});
+    this.setState({[statevar]: formValues});
+  }
+
+  recordEntityFormValue = (event) => {
+    return this.recordFormValue(event, 'entityFormValues');
+  }
+  recordReferenceFormValue = (event) => {
+    return this.recordFormValue(event, 'referenceFormValues');
   }
 
   // Deal with autocomplete suggestions
@@ -135,13 +149,13 @@ class ReferenceBox extends React.Component {
       this.referenceAnnotation();
     } else {
       // We need to make the entity first.
-      if (!this.state.formValues.identifier) {
+      if (!this.state.entityFormValues.identifier) {
         alert("Cannot create a new entity without an identifier!");
         return;
       }
       const newEntity = {
-        label: this.props.refclass.toUpperCase(),
-        properties: this.state.formValues
+        label: this.entitylabel,
+        properties: this.state.entityFormValues
       };
       fetch('/api/annotation', {
         method: 'POST',
@@ -194,15 +208,20 @@ class ReferenceBox extends React.Component {
       const beginId = this.props.selection.start.replace('r', '');
       const endId = this.props.selection.end.replace('r', '');
       const newRef = {
-        label: this.props.refclass.toUpperCase() + 'REF',
-        properties: {
-          authority: document.getElementById('ref-authority').value
-        },
+        label: this.referencelabel,
         links: [
           {type: 'BEGIN', target: parseInt(beginId)},
           {type: 'END', target: parseInt(endId)}
         ]
       };
+      // Does the reference have properties?
+      if (this.state.referenceFormValues) {
+        newRef.properties = this.state.referenceFormValues;
+      } else {
+        newRef.properties = {
+          authority: document.getElementById('ref-authority').value
+        }
+      }
       fetch('/api/annotation', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -242,17 +261,17 @@ class ReferenceBox extends React.Component {
   render() {
     const selectedText = this.props.selection ? this.props.selection.text : '';
     const inputProps = {
-      placeholder: 'Select a ' + this.props.refclass,
+      placeholder: 'Select a ' + this.entitylabel.toLowerCase(),
       value: this.state.inputValue,
       onChange: this.onChange
     };
 
     let targetSelect;
     if (this.state.newOrExisting === 'new') {
-      targetSelect = <NewEntity
+      targetSelect = <PropertyForm
         spec={this.props.spec}
         existing={this.state.oldReference}
-        recordFormValue={this.recordFormValue}
+        recordFormValue={this.recordEntityFormValue}
       />;
     } else {
       targetSelect = <Autosuggest
@@ -281,12 +300,12 @@ class ReferenceBox extends React.Component {
     return (
       <>
         <Button className={"controlpanel ref-" + this.props.refclass} size="lg" onClick={this.handleShow}>
-          Link to {this.props.refclass}
+          {this.props.refclass === 'dating' ? 'Date an episode' : 'Link to ' + this.props.refclass}
         </Button>
 
         <Modal show={this.state.show} onHide={this.handleClose}>
           <Modal.Header closeButton>
-            <Modal.Title>Reference a {this.props.refclass}</Modal.Title>
+            <Modal.Title>Reference a {this.entitylabel.toLowerCase()}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p>{selectedText}</p>
@@ -317,6 +336,11 @@ class ReferenceBox extends React.Component {
                 </Row>
                 <Row>
                   <Col md={12}>
+                    {this.props.refspec ?
+                      <PropertyForm
+                        spec={this.props.refspec}
+                        recordFormValue={this.recordReferenceFormValue}
+                      /> : ''}
                     <select onChange={this.setLinkType}>
                       {linkTypeSelect}
                     </select>
