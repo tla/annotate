@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 
@@ -7,9 +8,14 @@ const port = process.env.PORT || 5000;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.all('/api/*', (req, res) => {
-  const baseurl = 'https://api.editions.byzantini.st/ChronicleME/stemmarest/tradition/4aaf8973-7ac9-402a-8df9-19a2a050e364/';
+  const baseurl = process.env.ENDPOINT + "/tradition/" + process.env.TRADITION + "/";
   const auth = req.get('X-Authhash');
   const params = {
     method: req.method,
@@ -23,7 +29,6 @@ app.all('/api/*', (req, res) => {
   }
   const url = req.params[0];
   if (url === "test") {
-    console.log(req.headers);
     params.method = 'GET';
     fetch(baseurl, params)
     .then( response => {
