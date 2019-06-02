@@ -141,11 +141,13 @@ class ReferenceBox extends React.Component {
       }
       const newEntity = {
         label: this.props.spec.name,
+        primary: true,
         properties: this.state.entityFormValues
       };
       fetch('/api/annotation', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json',
+                  'X-Authhash': this.props.authhash},
         body: JSON.stringify(newEntity)
       })
       .then(response => response.json())
@@ -183,7 +185,8 @@ class ReferenceBox extends React.Component {
       if (oldLink) {
         fetch (url, {
           method: 'DELETE',
-          headers: {'Content-Type': 'application/json'},
+          headers: {'Content-Type': 'application/json', 
+                    'X-Authhash': this.props.authhash},
           body: JSON.stringify(oldLink)
         }).then(response => {
           if (!response.ok) {
@@ -218,7 +221,8 @@ class ReferenceBox extends React.Component {
       // Make the reference...
       fetch('/api/annotation', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json',
+                  'X-Authhash': this.props.authhash},
         body: JSON.stringify(newRef)
       })
       .then(response => response.json())
@@ -240,7 +244,8 @@ class ReferenceBox extends React.Component {
     };
     fetch(url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json',
+                'X-Authhash': this.props.authhash},
       body: JSON.stringify(newLink)
     })
     .then(response => response.json())

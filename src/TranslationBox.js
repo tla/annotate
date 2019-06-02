@@ -80,7 +80,8 @@ class TranslationBox extends React.Component {
     var needToDelete = false;
     fetch(url, {
       method: method,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 
+                'X-Authhash': this.props.authhash},
       body: JSON.stringify(transData)
     }).then( response => response.json())
     .then( newTrans => {
