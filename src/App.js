@@ -28,7 +28,6 @@ class App extends React.Component {
       body: JSON.stringify({})
     })
     .then(response => {
-      debugger;
       if (response.ok) {
         this.setState({authority: user, authhash: authhash, loggedIn: true});
       } else {

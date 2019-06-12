@@ -53,13 +53,13 @@ class ReferenceBox extends React.Component {
       }
       linkTypes.sort();
       // Do we have an existing linked entity of our default link type?
-      const oldReference = this.props.linkedEntities[linkTypes[0]];
+      const oldEntity = this.props.linkedEntities[linkTypes[0]];
       // Set the state
       this.setState({
         show: true,
         linkTypes: linkTypes,
         linkType: linkTypes[0],
-        inputValue: oldReference ? oldReference.properties.identifier : '',
+        inputValue: oldEntity ? oldEntity.properties.identifier : '',
       });
     }
   }
@@ -121,7 +121,7 @@ class ReferenceBox extends React.Component {
   // to this span of text.
   updateOrCreateEntity() {
     // Have we selected an existing entity?
-    if (this.state.selectedEntity) {
+    if (this.state.selectedEntity && !this.state.willCreateNew) {
       // If the selected entity is already linked to the existing (old)
       // reference annotation, then we don't need to make any changes at all.
       const linkedEntity = this.getEntityForLinkType();
@@ -172,29 +172,29 @@ class ReferenceBox extends React.Component {
       return;
     }
     // Do we have an existing reference annotation?
+    debugger;
     if (this.props.oldReference) {
       const oldEntity = this.getEntityForLinkType();
       // We already know that oldEntity is not selectedEntity; otherwise
       // we would have already been finished. Delete the link between
       // oldEntity and oldReference.
-      const url = '/api/annotation/' + oldEntity.properties.id + '/link';
+      const url = '/api/annotation/' + oldEntity.id + '/link';
       const oldLink = oldEntity.links.find(x =>
-        x.target === this.props.oldReference.id
+        x.target === parseInt(this.props.oldReference.id)
         && x.type === this.state.linkType);
       // If an old link exists, delete it and re-link to the new entity
       if (oldLink) {
         fetch (url, {
           method: 'DELETE',
-          headers: {'Content-Type': 'application/json', 
+          headers: {'Content-Type': 'application/json',
                     'X-Authhash': this.props.authhash},
           body: JSON.stringify(oldLink)
-        }).then(response => {
-          if (!response.ok) {
-            const err = response.json();
-            Promise.reject(new Error(err));
-          }
-          this.linkEntityToRef(this.props.oldReference, oldEntity);
-        }).catch(error => alert("Failed to break old link! " + error.message));
+        })
+        .then(response => response.json())
+        .then(data => data.hasOwnProperty('error')
+          ? Promise.reject(new Error(data.error))
+          : this.linkEntityToRef(this.props.oldReference, data))
+        .catch(error => alert("Failed to break old link! " + error.message));
 
       // Otherwise just re-link to the new entity
       } else {

@@ -21,7 +21,7 @@ class Login extends React.Component {
     const failedLoginMessage = (
       <Row>
         <Col>
-          <p class="failed">The login username and password are not valid.</p>
+          <p className="failed">The login username and password are not valid.</p>
         </Col>
       </Row>
     );
