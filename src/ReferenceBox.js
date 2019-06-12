@@ -172,7 +172,6 @@ class ReferenceBox extends React.Component {
       return;
     }
     // Do we have an existing reference annotation?
-    debugger;
     if (this.props.oldReference) {
       const oldEntity = this.getEntityForLinkType();
       // We already know that oldEntity is not selectedEntity; otherwise
