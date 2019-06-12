@@ -9,11 +9,12 @@ class Login extends React.Component {
 
   recordUser = event => this.setState({user: event.target.value});
   recordPass = event => this.setState({pass: event.target.value});
-  setLogin = () => {
+  setLogin = (e) => {
     // Make sure they are both filled in
     if (this.state.user && this.state.pass) {
       this.props.setter(this.state.user, this.state.pass);
     }
+    e.preventDefault();
   }
 
   // Render a login page and a button to send the state to the annotator
@@ -30,7 +31,7 @@ class Login extends React.Component {
         <Navbar bg="light">
           <Navbar.Brand>Section annotator - Login</Navbar.Brand>
         </Navbar>
-        <form name="login" action="#">
+        <form onSubmit={this.setLogin}>
           <Container>
             <Row>
               <Col md={3}>
@@ -50,7 +51,7 @@ class Login extends React.Component {
             </Row>
             <Row>
               <Col offset={3}>
-                <Button onClick={this.setLogin}>Start annotating</Button>
+                <Button type="submit">Start annotating</Button>
               </Col>
             </Row>
             {this.props.failedAttempt ? failedLoginMessage : ''}
