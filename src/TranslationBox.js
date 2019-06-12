@@ -19,6 +19,7 @@ class TranslationBox extends React.Component {
     this.handleShow = this.handleShow.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.updateTranslation = this.updateTranslation.bind(this);
+    this.deleteOld = this.deleteOld.bind(this);
 
     this.state = {
       show: false,
@@ -77,10 +78,9 @@ class TranslationBox extends React.Component {
     }
     // We are updating the existing translation
     // POST the new translation transData
-    var needToDelete = false;
     fetch(url, {
       method: method,
-      headers: {'Content-Type': 'application/json', 
+      headers: {'Content-Type': 'application/json',
                 'X-Authhash': this.props.authhash},
       body: JSON.stringify(transData)
     }).then( response => response.json())
@@ -91,7 +91,7 @@ class TranslationBox extends React.Component {
         this.props.annotationsAdded([newTrans], true);
         // If we POSTED a new translation and an old one exists, delete the old one.
         if (existing && newTrans.id !== existing.id) {
-          needToDelete = true;
+          this.deleteOld(url + '/' + existing.id);
         }
       } else if (newTrans.hasOwnProperty('error')) {
         Promise.reject(new Error(newTrans.error))
@@ -104,15 +104,18 @@ class TranslationBox extends React.Component {
       this.setState({show: false, oldTranslation: null});
     })
     .catch(error => alert("Translation save error! " + error));
+  }
 
-    if (needToDelete) {
-      fetch(url + '/' + existing.id, { method: 'DELETE'})
-      .then(response => response.json())
-      .then(data => data.hasOwnProperty('error')
-        ? Promise.reject(new Error(data.error))
-        : this.props.annotationRemoved(data))
-      .catch(error => alert("Error deleting old translation!" + error));
-    }
+  deleteOld(existingUrl) {
+    fetch(existingUrl, {
+      method: 'DELETE',
+      headers: {'X-Authhash': this.props.authhash}
+    })
+    .then(response => response.json())
+    .then(data => data.hasOwnProperty('error')
+      ? Promise.reject(new Error(data.error))
+      : this.props.annotationsRemoved(data))
+    .catch(error => alert("Error deleting old translation!" + error));
   }
 
   render() {

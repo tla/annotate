@@ -43,7 +43,7 @@ class Annotate extends React.Component {
     this.textLoadHandler = this.textLoadHandler.bind(this);
     this.textSelectHandler = this.textSelectHandler.bind(this);
     this.annotationsAdded = this.annotationsAdded.bind(this);
-    this.annotationRemoved = this.annotationRemoved.bind(this);
+    this.annotationsRemoved = this.annotationsRemoved.bind(this);
 
     this.state = {
       selection: null,
@@ -136,6 +136,7 @@ class Annotate extends React.Component {
           x => isAnchoredToReadingSpan(x, beginId, endId));
         const selectionEntities = {};
         if (selectionAnnotation) {
+          newState.selectionAnnotation = selectionAnnotation;
           this.state.annotations.forEach(x => {
             const link = entityLinkedAs(x, selectionAnnotation.id);
             if (link) {
@@ -193,9 +194,11 @@ class Annotate extends React.Component {
     });
   }
 
-  annotationRemoved(annotation) {
+  annotationsRemoved(annolist) {
     // Weed the old annotation out of our list and reset the state
-    const remaining = this.state.annotations.filter(x => x.id !== annotation.id);
+    // Get a list of annotation IDs to be removed
+    const deletedIds = annolist.map(x => x.id);
+    const remaining = this.state.annotations.filter(x => !deletedIds.includes(x.id));
     if (remaining.length !== this.state.annotations.length) {
       this.setState({annotations: remaining});
     }
@@ -230,7 +233,7 @@ class Annotate extends React.Component {
                   spec={this.getAnnotationSpec('person')}
                   refspec={this.getAnnotationSpec('personref')}
                   annotationsAdded={this.annotationsAdded}
-                  annotationRemoved={this.annotationRemoved}
+                  annotationsRemoved={this.annotationsRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -245,7 +248,7 @@ class Annotate extends React.Component {
                   spec={this.getAnnotationSpec('place')}
                   refspec={this.getAnnotationSpec('placeref')}
                   annotationsAdded={this.annotationsAdded}
-                  annotationRemoved={this.annotationRemoved}
+                  annotationsRemoved={this.annotationsRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -261,7 +264,7 @@ class Annotate extends React.Component {
                   spec={this.getAnnotationSpec('date')}
                   refspec={this.getAnnotationSpec('dateref')}
                   annotationsAdded={this.annotationsAdded}
-                  annotationRemoved={this.annotationRemoved}
+                  annotationsRemoved={this.annotationsRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -277,7 +280,7 @@ class Annotate extends React.Component {
                   spec={this.getAnnotationSpec('date')}
                   refspec={this.getAnnotationSpec('dating')}
                   annotationsAdded={this.annotationsAdded}
-                  annotationRemoved={this.annotationRemoved}
+                  annotationsRemoved={this.annotationsRemoved}
                 />
               </Col></Row>
               <Row><Col md={12}>
@@ -286,7 +289,7 @@ class Annotate extends React.Component {
                   selection={this.state.selection}
                   annotations={this.state.annotations}
                   annotationsAdded={this.annotationsAdded}
-                  annotationRemoved={this.annotationRemoved}
+                  annotationsRemoved={this.annotationsRemoved}
                 />
               </Col></Row>
             </Container>
