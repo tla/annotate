@@ -5,9 +5,18 @@ import Col from 'react-bootstrap/Col';
 
 function PropertyForm(props) {
   const formrows = [];
-  Object.keys(props.spec.properties)
-    .filter(x => x !== 'authority') // We handle the authority separately
-    .forEach(k => {
+  // HACK to make identifier come first and comment come last
+  const orderedKeys = Object.keys(props.spec.properties)
+    .filter(x => x !== 'authority');
+  if (orderedKeys.indexOf('identifier') > 0) {
+    orderedKeys.splice(orderedKeys.indexOf('identifier'), 1);
+    orderedKeys.unshift('identifier');
+  }
+  if (orderedKeys.indexOf('comment') > -1) {
+    orderedKeys.splice(orderedKeys.indexOf('comment'), 1);
+    orderedKeys.push('comment');
+  }
+  orderedKeys.forEach(k => {
       const v = props.spec.properties[k];
       const label = <label key={k + "Label"} htmlFor={k + "Input"}>{k}</label>;
       let existingValue = props.existing ? props.existing.properties[k] : '';

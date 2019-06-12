@@ -52,6 +52,8 @@ class ReferenceBox extends React.Component {
         });
       }
       linkTypes.sort();
+      // HACKY HACKY HACK to make 'REFERENCED' come first
+      linkTypes.reverse();
       // Do we have an existing linked entity of our default link type?
       const oldEntity = this.props.linkedEntities[linkTypes[0]];
       // Set the state

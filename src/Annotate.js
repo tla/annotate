@@ -44,6 +44,7 @@ class Annotate extends React.Component {
     this.textSelectHandler = this.textSelectHandler.bind(this);
     this.annotationsAdded = this.annotationsAdded.bind(this);
     this.annotationsRemoved = this.annotationsRemoved.bind(this);
+    this.getReferenceBox = this.getReferenceBox.bind(this);
 
     this.state = {
       selection: null,
@@ -204,6 +205,33 @@ class Annotate extends React.Component {
     }
   }
 
+  getReferenceBox(btype) {
+    let buttontext = "Tag a " + btype;
+    let entitytype = btype;
+    let referencetype = btype + 'ref';
+    if (btype === 'dating') {
+      buttontext = "Date an episode";
+      entitytype = "date";
+      referencetype = "dating";
+    }
+    return (
+      <ReferenceBox
+        annotations={this.state.annotations}
+        authority={this.props.authority}
+        authhash={this.props.authhash}
+        buttontext={buttontext}
+        selection={this.state.selection}
+        oldReference={this.state.selectionAnnotation}
+        linkedEntities={this.state.selectionEntities}
+        suggestionList={this.getExisting(entitytype.toUpperCase())}
+        spec={this.getAnnotationSpec(entitytype)}
+        refspec={this.getAnnotationSpec(referencetype)}
+        annotationsAdded={this.annotationsAdded}
+        annotationsRemoved={this.annotationsRemoved}
+      />
+    );
+  }
+
   render() {
     return (
       <div>
@@ -221,67 +249,16 @@ class Annotate extends React.Component {
           <Col>
             <Container className="sticky-top">
               <Row><Col md={12}>
-                <ReferenceBox
-                  authority={this.props.authority}
-                  authhash={this.props.authhash}
-                  buttontext="Tag a person"
-                  selection={this.state.selection}
-                  oldReference={this.state.selectionAnnotation}
-                  linkedEntities={this.state.selectionEntities}
-                  suggestionList={this.getExisting('PERSON')}
-                  annotations={this.state.annotations}
-                  spec={this.getAnnotationSpec('person')}
-                  refspec={this.getAnnotationSpec('personref')}
-                  annotationsAdded={this.annotationsAdded}
-                  annotationsRemoved={this.annotationsRemoved}
-                />
+                {this.getReferenceBox('person')}
               </Col></Row>
               <Row><Col md={12}>
-                <ReferenceBox
-                  authority={this.props.authority}
-                  authhash={this.props.authhash}
-                  buttontext="Tag a place"
-                  selection={this.state.selection}
-                  oldReference={this.state.selectionAnnotation}
-                  linkedEntities={this.state.selectionEntities}
-                  suggestionList={this.getExisting('PLACE')}
-                  spec={this.getAnnotationSpec('place')}
-                  refspec={this.getAnnotationSpec('placeref')}
-                  annotationsAdded={this.annotationsAdded}
-                  annotationsRemoved={this.annotationsRemoved}
-                />
+                {this.getReferenceBox('place')}
               </Col></Row>
               <Row><Col md={12}>
-                <ReferenceBox
-                  authority={this.props.authority}
-                  authhash={this.props.authhash}
-                  buttontext="Tag a date"
-                  selection={this.state.selection}
-                  oldReference={this.state.selectionAnnotation}
-                  linkedEntities={this.state.selectionEntities}
-                  suggestionList={this.getExisting('DATE')}
-                  annotations={this.state.annotations}
-                  spec={this.getAnnotationSpec('date')}
-                  refspec={this.getAnnotationSpec('dateref')}
-                  annotationsAdded={this.annotationsAdded}
-                  annotationsRemoved={this.annotationsRemoved}
-                />
+                {this.getReferenceBox('date')}
               </Col></Row>
               <Row><Col md={12}>
-                <ReferenceBox
-                  authority={this.props.authority}
-                  authhash={this.props.authhash}
-                  buttontext="Date an episode"
-                  selection={this.state.selection}
-                  oldReference={this.state.selectionAnnotation}
-                  linkedEntities={this.state.selectionEntities}
-                  suggestionList={this.getExisting('DATE')}
-                  annotations={this.state.annotations}
-                  spec={this.getAnnotationSpec('date')}
-                  refspec={this.getAnnotationSpec('dating')}
-                  annotationsAdded={this.annotationsAdded}
-                  annotationsRemoved={this.annotationsRemoved}
-                />
+                {this.getReferenceBox('dating')}
               </Col></Row>
               <Row><Col md={12}>
                 <TranslationBox
