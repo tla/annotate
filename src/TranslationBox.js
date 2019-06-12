@@ -78,7 +78,6 @@ class TranslationBox extends React.Component {
     }
     // We are updating the existing translation
     // POST the new translation transData
-    var needToDelete = false;
     fetch(url, {
       method: method,
       headers: {'Content-Type': 'application/json',
