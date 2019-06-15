@@ -135,9 +135,9 @@ class Annotate extends React.Component {
         // annotation, though it might link multiple entities.
         const selectionAnnotation = this.state.annotations.find(
           x => isAnchoredToReadingSpan(x, beginId, endId));
+        newState.selectionAnnotation = selectionAnnotation;
         const selectionEntities = {};
         if (selectionAnnotation) {
-          newState.selectionAnnotation = selectionAnnotation;
           this.state.annotations.forEach(x => {
             const link = entityLinkedAs(x, selectionAnnotation.id);
             if (link) {

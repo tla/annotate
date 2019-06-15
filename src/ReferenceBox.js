@@ -67,7 +67,15 @@ class ReferenceBox extends React.Component {
   }
 
   // This is called when the link type dropdown is changed
-  setLinkType = event => this.setState({ linkType: event.target.value });
+  setLinkType = event => {
+    // Is there an old entity associated with the newly chosen link type?
+    const newType = event.target.value
+    const oldEntity = this.props.linkedEntities[newType];
+    this.setState({
+      linkType: event.target.value,
+      inputValue: oldEntity ? oldEntity.properties.identifier : ''
+    });
+  }
   // This is a utility function for getting the existing (old) linked entity
   // according to whichever link type is currently selected
   getEntityForLinkType = () => this.props.linkedEntities[this.state.linkType]
@@ -176,29 +184,36 @@ class ReferenceBox extends React.Component {
     // Do we have an existing reference annotation?
     if (this.props.oldReference) {
       const oldEntity = this.getEntityForLinkType();
-      // We already know that oldEntity is not selectedEntity; otherwise
-      // we would have already been finished. Delete the link between
-      // oldEntity and oldReference.
-      const url = '/api/annotation/' + oldEntity.id + '/link';
-      const oldLink = oldEntity.links.find(x =>
-        x.target === parseInt(this.props.oldReference.id)
-        && x.type === this.state.linkType);
-      // If an old link exists, delete it and re-link to the new entity
-      if (oldLink) {
-        fetch (url, {
-          method: 'DELETE',
-          headers: {'Content-Type': 'application/json',
-                    'X-Authhash': this.props.authhash},
-          body: JSON.stringify(oldLink)
-        })
-        .then(response => response.json())
-        .then(data => data.hasOwnProperty('error')
-          ? Promise.reject(new Error(data.error))
-          : this.linkEntityToRef(this.props.oldReference, data))
-        .catch(error => alert("Failed to break old link! " + error.message));
-
-      // Otherwise just re-link to the new entity
+      // There may not be an old entity, if we are reusing the reference
+      // to make a different sort of link type.
+      if (oldEntity) {
+        // We already know that oldEntity is not selectedEntity; otherwise
+        // we would have already been finished. Delete the link between
+        // oldEntity and oldReference.
+        const url = '/api/annotation/' + oldEntity.id + '/link';
+        const oldLink = oldEntity.links.find(x =>
+          x.target === parseInt(this.props.oldReference.id)
+          && x.type === this.state.linkType);
+        // If an old link exists, delete it and re-link to the new entity
+        if (oldLink) {
+          fetch (url, {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json',
+                      'X-Authhash': this.props.authhash},
+            body: JSON.stringify(oldLink)
+          })
+          .then(response => response.json())
+          .then(data => data.hasOwnProperty('error')
+            ? Promise.reject(new Error(data.error))
+            : this.linkEntityToRef(this.props.oldReference, data))
+          .catch(error => alert("Failed to break old link! " + error.message));
+        } else {
+          // There was an old entity, but no link found (?? This shouldn't happen)
+          console.log("WARNING: Old entity found without link to reference?!")
+          this.linkEntityToRef(this.props.oldReference);
+        }
       } else {
+        // The reference hasn't yet been used for this link type
         this.linkEntityToRef(this.props.oldReference);
       }
     } else {
