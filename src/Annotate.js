@@ -50,6 +50,7 @@ class Annotate extends React.Component {
       selection: null,
       annotations: [],
       annotationspecs: {},
+      selectionAnnotations: {},
       sectionList: [],
       loadText: []
     };
@@ -131,20 +132,20 @@ class Annotate extends React.Component {
           end: endId
         }
         // Then look up any existing annotation(s) on this selection
-        // TODO this assumes that the selection will only have a single reference
-        // annotation, though it might link multiple entities.
-        const selectionAnnotation = this.state.annotations.find(
-          x => isAnchoredToReadingSpan(x, beginId, endId));
-        newState.selectionAnnotation = selectionAnnotation;
+        const selectionAnnotations = {};
+        this.state.annotations.filter(
+          x => isAnchoredToReadingSpan(x, beginId, endId))
+          .map(x => selectionAnnotations[x.label.toLowerCase()] = x);
+        newState.selectionAnnotations = selectionAnnotations;
         const selectionEntities = {};
-        if (selectionAnnotation) {
+        Object.values(selectionAnnotations).forEach(a => {
           this.state.annotations.forEach(x => {
-            const link = entityLinkedAs(x, selectionAnnotation.id);
+            const link = entityLinkedAs(x, a.id);
             if (link) {
               selectionEntities[link] = x;
             }
           });
-        }
+        });
         newState.selectionEntities = selectionEntities;
         this.setState(newState);
 
@@ -221,7 +222,7 @@ class Annotate extends React.Component {
         authhash={this.props.authhash}
         buttontext={buttontext}
         selection={this.state.selection}
-        oldReference={this.state.selectionAnnotation}
+        oldReference={this.state.selectionAnnotations[referencetype]}
         linkedEntities={this.state.selectionEntities}
         suggestionList={this.getExisting(entitytype.toUpperCase())}
         spec={this.getAnnotationSpec(entitytype)}
