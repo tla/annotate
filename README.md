@@ -6,9 +6,9 @@ This is an interface, written in React.JS, to create certain sorts of annotation
 - Dating of episodes in the text, associated with specific dates
 - Translations of the text
 
-## Initial setup
+## Initial setup and testing it out
 
-This app consists of a frontend React app, which is the interface, and a backend app that proxies requests to the Stemmarest repository. To try it out, the first step is to install all necessary dependencies with the command
+For development purposes, this app consists of a frontend React app, which is the interface, and a backend app that proxies requests to the Stemmarest repository. To try it out, the first step is to install all necessary dependencies with the command
 
     yarn install
 
@@ -16,8 +16,6 @@ Next you will need to set two environment variables pointing to the Stemmarest s
 
     TRADITION=UUID-FOR-YOUR-TRADITION
     ENDPOINT=https://PATH.TO.YOUR/INSTANCE_OF/stemmarest
-
-## Running the application
 
 Once this is done, you can start the system with
 
@@ -27,4 +25,10 @@ This will start both the "frontend" server on port 3000 and the "backend" server
 
 ## Deploying the application
 
-We recommend running this in production from Docker. Someday soon there will be instructions for making the docker image...
+When the app has been tested and (if necessary) modified, it can be set up to run in production with the following commands:
+
+    yarn build
+    cp server/index.js .
+    TRADITION=UUID-FOR-YOUR-TRADITION ENDPOINT=https://PATH.TO.YOUR/INSTANCE_OF/stemmarest node index.js
+
+Alternatively, you may use the Docker image that is available [here](https://hub.docker.com/repository/docker/chrysaphi/annotate). You will still need to set the appropriate environment variables when creating the container.
