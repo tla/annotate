@@ -16,7 +16,7 @@ body {
   margin-bottom: 20px;
 }
 
-.referenceform > .row {
+.referenceform>.row {
   margin-bottom: 20px;
   border-bottom: 1px black;
 }
@@ -30,8 +30,9 @@ body {
   text-decoration-style: dotted;
   text-decoration-color: #AAAA82;
 }
-.translated-start {
-}
+
+.translated-start {}
+
 .translated-end::after {
   content: "\01F4AC";
 }
@@ -39,9 +40,11 @@ body {
 .ref-person {
   background-color: rgb(209, 146, 76);
 }
+
 .personref {
   color: rgb(209, 146, 76);
 }
+
 .personref-end::after {
   content: "\01F9D1";
 }
@@ -49,9 +52,11 @@ body {
 .ref-place {
   background-color: rgb(68, 131, 170);
 }
+
 .placeref {
   color: rgb(68, 131, 170);
 }
+
 .placeref-end::after {
   content: "\01F5FA";
 }
@@ -59,9 +64,11 @@ body {
 .ref-date {
   background-color: rgb(182, 93, 93);
 }
+
 .dateref {
   color: rgb(182, 93, 93);
 }
+
 .dateref-end::after {
   content: "\01F5D3";
 }
@@ -69,6 +76,15 @@ body {
 .propertybox {
   border-top: 1px solid #999;
   padding: 10px;
+}
+
+.ref-dating {
+  background-color: #F2F3F4;
+  color: #212529;
+}
+
+.dating {
+  background-color: #F2F3F4
 }
 
 /* Styling for autosuggest box
