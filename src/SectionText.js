@@ -29,6 +29,9 @@ function SectionText(props) {
     // Now for each reading, check whether we are in an annotation
     for (let anno of annotations) {
       let classLabel = 'translated';
+      if (anno.class == 'COMMENT') {
+        classLabel = 'commented';
+      }
       if (anno.class.endsWith('REF') || anno.class === 'DATING') {
         classLabel = anno.class.toLowerCase();
       }

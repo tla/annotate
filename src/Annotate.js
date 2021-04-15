@@ -7,7 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Navigation from './Navigation';
 import SectionText from './SectionText';
 import ReferenceBox from './ReferenceBox';
-import TranslationBox from './TranslationBox';
+import FlatAnnoBox from './FlatAnnoBox';
 
 // ---- Utility functions
 
@@ -233,6 +233,23 @@ class Annotate extends React.Component {
     );
   }
 
+  getFlatAnnoBox(btype) {
+      let buttontext = "Add/edit " + btype;
+      let entitytype = btype;
+      return (
+          <FlatAnnoBox
+            authhash={this.props.authhash}
+            authority={this.props.authority}
+            selection={this.state.selection}
+            annotations={this.state.annotations}
+            annotationsAdded={this.annotationsAdded}
+            annotationsRemoved={this.annotationsRemoved}
+            buttontext={buttontext}
+            spec={this.getAnnotationSpec(entitytype)}
+          />
+      );
+  }
+
   render() {
     return (
       <div>
@@ -262,13 +279,10 @@ class Annotate extends React.Component {
                 {this.getReferenceBox('dating')}
               </Col></Row>
               <Row><Col md={12}>
-                <TranslationBox
-                  authhash={this.props.authhash}
-                  selection={this.state.selection}
-                  annotations={this.state.annotations}
-                  annotationsAdded={this.annotationsAdded}
-                  annotationsRemoved={this.annotationsRemoved}
-                />
+                {this.getFlatAnnoBox('translation')}
+              </Col></Row>
+              <Row><Col md={12}>
+                {this.getFlatAnnoBox('comment')}
               </Col></Row>
             </Container>
           </Col>

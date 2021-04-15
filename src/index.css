@@ -37,6 +37,15 @@ body {
   content: "\01F4AC";
 }
 
+.commented {
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-color: #82AAAA;
+}
+.commented-end::after {
+    content: "\01F914";
+}
+
 .ref-person {
   background-color: rgb(209, 146, 76);
 }
