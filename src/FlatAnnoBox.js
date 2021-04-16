@@ -1,5 +1,7 @@
 import React from 'react';
+import Accordion from 'react-bootstrap/Accordion';
 import Button from 'react-bootstrap/Button';
+import Card from 'react-bootstrap/Card';
 import Modal from 'react-bootstrap/Modal';
 
 // Utility functions
@@ -178,12 +180,20 @@ class FlatAnnoBox extends React.Component {
                 defaultValue={this.state.oldAnnotation ? this.state.oldAnnotation.properties.text : ''}
               />
               {hasSpec && 'comment' in this.props.spec.properties ?
-              <>
-                <label htmlFor={annoType + "-comment"}>Comment: </label>
-                <textarea name="comment" id={annoType + "-comment"} rows="3"
-                  cols="40" defaultValue={this.state.oldAnnotation ?
-                  this.state.oldAnnotation.properties.comment : ''} />
-              </> : ''}
+              <Accordion>
+                <Card>
+                  <Card.Header>
+                    <Accordion.Toggle as={Button} variant="link" eventKey="0">
+                      Add a comment
+                    </Accordion.Toggle>
+                  </Card.Header>
+                  <Accordion.Collapse eventKey="0">
+                    <Card.Body>
+                      <textarea name="comment" id={annoType + "-comment"} rows="3" cols="40" defaultValue={this.state.oldAnnotation ? this.state.oldAnnotation.properties.comment : ''} />
+                    </Card.Body>
+                  </Accordion.Collapse>
+                </Card>
+              </Accordion>: ''}
               {hasSpec && 'by' in this.props.spec.properties ?
               <input type="hidden" name="by" id={annoType + "-by"}
                 value={this.props.authority} /> : ''}
