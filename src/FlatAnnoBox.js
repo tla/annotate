@@ -13,7 +13,7 @@ function anchoredToReading(annotation, rdgid) {
 function getAnnotationData(spec) {
     const annoData = {};
     const specName = spec.name.toLowerCase();
-    spec.properties.keys().foreach(p => {
+    Object.keys(spec.properties).forEach(p => {
         var htmlId = specName + '-' + p;
         var el = document.getElementById(htmlId);
         if (el != null) {
@@ -79,7 +79,7 @@ class FlatAnnoBox extends React.Component {
     if (existing &&
       existing.links.find(x => x.type === 'END' && x.target === anchorEnd)) {
         textChangeOnly = true;
-        existing.properties.keys().foreach(p => {
+        Object.keys(existing.properties).forEach(p => {
             if (p !== 'text' && p !== 'comment'
               && existing.properties[p] !== newAnnotation[p]) {
                 textChangeOnly = false;
@@ -149,6 +149,7 @@ class FlatAnnoBox extends React.Component {
 
   render() {
     const selectedText = this.props.selection ? this.props.selection.text : '';
+    const hasSpec = 'properties' in this.props.spec;
     const annoType = 'name' in this.props.spec ? this.props.spec.name.toLowerCase() : '';
     return (
       <>
@@ -162,30 +163,30 @@ class FlatAnnoBox extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <p>{selectedText}</p>
-            <form name="{annoType}" action="#">
-              {'language' in this.props.spec ?
+            <form name="addFlatAnnotation" action="#">
+              {hasSpec && 'language' in this.props.spec.properties ?
               <>
-                <label htmlFor="{annoType}-language">Language: </label>
-                <select name="language" id="{annoType}-language"
+                <label htmlFor={annoType + "-language"}>Language: </label>
+                <select name="language" id={annoType + "-language"}
                   defaultValue={this.state.oldAnnotation ?
                     this.state.oldAnnotation.properties.language : 'en'}>
                   <option value="en">English</option>
                   <option value="fr">French</option>
                 </select>
               </> : ''}
-              <textarea name="text" id="{annoType}-text" rows="5" cols="40"
+              <textarea name="text" id={annoType + "-text"} rows="5" cols="40"
                 defaultValue={this.state.oldAnnotation ? this.state.oldAnnotation.properties.text : ''}
               />
-              {'comment' in this.props.spec ?
+              {hasSpec && 'comment' in this.props.spec.properties ?
               <>
-                <label htmlFor="{annoType}-comment">Comment: </label>
-                <textarea name="comment" id="{annoType}-comment" rows="3"
+                <label htmlFor={annoType + "-comment"}>Comment: </label>
+                <textarea name="comment" id={annoType + "-comment"} rows="3"
                   cols="40" defaultValue={this.state.oldAnnotation ?
                   this.state.oldAnnotation.properties.comment : ''} />
               </> : ''}
-              {'by' in this.props.spec ?
-              <input type="hidden" name="by" id="{annoType}-by"
-                value="{this.props.authority}" /> : ''}
+              {hasSpec && 'by' in this.props.spec.properties ?
+              <input type="hidden" name="by" id={annoType + "-by"}
+                value={this.props.authority} /> : ''}
             </form>
           </Modal.Body>
           <Modal.Footer>
@@ -193,7 +194,7 @@ class FlatAnnoBox extends React.Component {
               Cancel
             </Button>
             <Button variant="primary" onClick={this.updateAnnotation}>
-              Save Translation
+              Save {annoType}
             </Button>
           </Modal.Footer>
         </Modal>

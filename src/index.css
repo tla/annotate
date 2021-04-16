@@ -38,9 +38,7 @@ body {
 }
 
 .commented {
-    text-decoration-line: underline;
-    text-decoration-style: solid;
-    text-decoration-color: #82AAAA;
+    border-bottom: 2px solid blue;
 }
 .commented-end::after {
     content: "\01F914";
