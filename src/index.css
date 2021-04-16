@@ -21,10 +21,6 @@ body {
   border-bottom: 1px black;
 }
 
-.selected {
-  background-color: yellow;
-}
-
 .translated {
   text-decoration-line: underline;
   text-decoration-style: dotted;
@@ -93,6 +89,13 @@ body {
 .dating {
   background-color: #F2F3F4
 }
+
+/* This needs to stay last so that it overrides the above */
+.selected {
+  background-color: yellow;
+}
+
+
 
 /* Styling for autosuggest box
 .react-autosuggest__container {
