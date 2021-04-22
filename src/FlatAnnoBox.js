@@ -40,6 +40,7 @@ class FlatAnnoBox extends React.Component {
     this.handleClose = this.handleClose.bind(this);
     this.updateAnnotation = this.updateAnnotation.bind(this);
     this.deleteOld = this.deleteOld.bind(this);
+    this.deleteAnnotation = this.deleteAnnotation.bind(this);
 
     this.state = {
       show: false,
@@ -124,7 +125,7 @@ class FlatAnnoBox extends React.Component {
         if (existing && newAnno.id !== existing.id) {
           this.deleteOld(url + '/' + existing.id);
         }
-    } else if (newAnno.hasOwnProperty('error')) {
+      } else if (newAnno.hasOwnProperty('error')) {
         Promise.reject(new Error(newAnno.error))
       } else {
         Promise.reject(new Error(newAnno));
@@ -138,7 +139,7 @@ class FlatAnnoBox extends React.Component {
   }
 
   deleteOld(existingUrl) {
-    fetch(existingUrl, {
+    let result = fetch(existingUrl, {
       method: 'DELETE',
       headers: {'X-Authhash': this.props.authhash}
     })
@@ -147,6 +148,22 @@ class FlatAnnoBox extends React.Component {
       ? Promise.reject(new Error(data.error))
       : this.props.annotationsRemoved(data))
     .catch(error => alert("Error deleting old " + this.props.spec.name + "! " + error));
+    return result;
+  }
+
+  deleteAnnotation() {
+    // Double-check
+    const sure = window.confirm("Do you really want to delete this "
+        + this.props.spec.name.toLowerCase() + "?");
+    if (sure) {
+      // Call deleteOld just above
+      const existing = this.state.oldAnnotation;
+      let result = this.deleteOld('/api/annotation/' + existing.id);
+      result.then( () => {
+        // Close the modal
+        this.setState({show: false, oldAnnotation: null});
+      });
+    }
   }
 
   render() {
@@ -200,6 +217,11 @@ class FlatAnnoBox extends React.Component {
             </form>
           </Modal.Body>
           <Modal.Footer>
+            {this.state.oldAnnotation ?
+            <Button variant="danger" onClick={this.deleteAnnotation}>
+              Delete
+            </Button>
+            : ''}
             <Button variant="secondary" onClick={this.handleClose}>
               Cancel
             </Button>

@@ -30,6 +30,7 @@ class ReferenceBox extends React.Component {
     this.updateOrCreateEntity = this.updateOrCreateEntity.bind(this);
     this.referenceAnnotation = this.referenceAnnotation.bind(this);
     this.linkEntityToRef = this.linkEntityToRef.bind(this);
+    this.deleteReference = this.deleteReference.bind(this);
 
     // This state handles show/hide of Modal, form display toggle, and state for Autosuggest
     this.state = defaultState;
@@ -279,6 +280,31 @@ class ReferenceBox extends React.Component {
     .catch(error => alert("Reference link save error! " + error.message))
   }
 
+  deleteReference() {
+      const sure = window.confirm("Do you really want to delete this "
+        + this.props.refspec.name.toLowerCase().replace('ref', '')
+        + " reference?");
+      if (sure) {
+        const existing = this.props.oldReference;
+        const url = '/api/annotation/' + existing.id;
+        fetch (url, {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json',
+                    'X-Authhash': this.props.authhash},
+          body: JSON.stringify(existing)
+        })
+        .then(response => response.json())
+        .then(data => data.hasOwnProperty('error')
+          ? Promise.reject(new Error(data.error))
+          : this.props.annotationsRemoved(data))
+        .then( () => {
+          // Close the modal
+          this.handleClose();
+        })
+        .catch(error => alert("Error deleting old " + this.props.spec.name + "! " + error));
+      }
+  }
+
   render() {
     const selectedText = this.props.selection ? this.props.selection.text : '';
     const refclass = this.props.refspec.hasOwnProperty('name') ?
@@ -384,6 +410,11 @@ class ReferenceBox extends React.Component {
             </form>
           </Modal.Body>
           <Modal.Footer>
+            {this.props.oldReference ?
+            <Button variant="danger" onClick={this.deleteReference}>
+              Delete
+            </Button>
+            : ''}
             <Button variant="secondary" onClick={this.handleClose}>
               Cancel
             </Button>
