@@ -155,10 +155,9 @@ class ReferenceBox extends React.Component {
         primary: true,
         properties: this.state.entityFormValues
       };
-      fetch('/api/annotation', {
+      fetch('/api/tradition/' + this.props.tradition + '/annotation', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json',
-                  'X-Authhash': this.props.authhash},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(newEntity)
       })
       .then(response => response.json())
@@ -191,7 +190,7 @@ class ReferenceBox extends React.Component {
         // We already know that oldEntity is not selectedEntity; otherwise
         // we would have already been finished. Delete the link between
         // oldEntity and oldReference.
-        const url = '/api/annotation/' + oldEntity.id + '/link';
+        const url = '/api/tradition/' + this.props.tradition + '/annotation/' + oldEntity.id + '/link';
         const oldLink = oldEntity.links.find(x =>
           x.target === parseInt(this.props.oldReference.id)
           && x.type === this.state.linkType);
@@ -199,8 +198,7 @@ class ReferenceBox extends React.Component {
         if (oldLink) {
           fetch (url, {
             method: 'DELETE',
-            headers: {'Content-Type': 'application/json',
-                      'X-Authhash': this.props.authhash},
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(oldLink)
           })
           .then(response => response.json())
@@ -236,10 +234,9 @@ class ReferenceBox extends React.Component {
         newRef.properties = { authority: this.props.authority }
       }
       // Make the reference...
-      fetch('/api/annotation', {
+      fetch('/api/tradition/' + this.props.tradition + '/annotation', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json',
-                  'X-Authhash': this.props.authhash},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(newRef)
       })
       .then(response => response.json())
@@ -254,15 +251,14 @@ class ReferenceBox extends React.Component {
   // definitely unlinked, so link them together.
   linkEntityToRef(referenceAnnotation, alsoUpdated) {
     const entity = this.state.selectedEntity;
-    const url = '/api/annotation/' + entity.id + '/link';
+    const url = '/api/tradition/' + this.props.tradition + '/annotation/' + entity.id + '/link';
     const newLink = {
       type: this.state.linkType,
       target: referenceAnnotation.id
     };
     fetch(url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json',
-                'X-Authhash': this.props.authhash},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(newLink)
     })
     .then(response => response.json())
@@ -286,11 +282,10 @@ class ReferenceBox extends React.Component {
         + " reference?");
       if (sure) {
         const existing = this.props.oldReference;
-        const url = '/api/annotation/' + existing.id;
+        const url = '/api/tradition/' + this.props.tradition + '/annotation/' + existing.id;
         fetch (url, {
           method: 'DELETE',
-          headers: {'Content-Type': 'application/json',
-                    'X-Authhash': this.props.authhash},
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(existing)
         })
         .then(response => response.json())

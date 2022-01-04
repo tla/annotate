@@ -58,7 +58,7 @@ class Annotate extends React.Component {
 
   componentDidMount() {
     // Initialise the section list
-    fetch('/api/sections', {headers: {'X-Authhash': this.props.authhash}})
+    fetch('/api/tradition/' + this.props.tradition + '/sections')
     .then(response => response.json())
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
@@ -66,7 +66,7 @@ class Annotate extends React.Component {
     .catch(error => alert("Error loading sections! " + error.message));
 
     // Initialise the annotations list
-    fetch('/api/annotations', {headers: {'X-Authhash': this.props.authhash}})
+    fetch('/api/tradition/' + this.props.tradition + '/annotations')
     .then(response => response.json())
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
@@ -75,7 +75,7 @@ class Annotate extends React.Component {
 
     // Initialise the list of annotation labels
     const annotationlabels = {};
-    fetch('/api/annotationlabels', {headers: {'X-Authhash': this.props.authhash}})
+    fetch('/api/tradition/' + this.props.tradition + '/annotationlabels')
     .then(response => response.json())
     .then(data => {
       if (data.hasOwnProperty('error')) {
@@ -89,8 +89,8 @@ class Annotate extends React.Component {
 
   // Alter the app's state to load the lemma text for the selected section.
   textLoadHandler(sectionId) {
-    const url = '/api/section/' + sectionId + '/lemmareadings';
-    fetch(url, {headers: {'X-Authhash': this.props.authhash}})
+    const url = '/api/tradition/' + this.props.tradition + '/section/' + sectionId + '/lemmareadings';
+    fetch(url)
     .then(response => response.json())
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
@@ -217,9 +217,9 @@ class Annotate extends React.Component {
     }
     return (
       <ReferenceBox
+        tradition={this.props.tradition}
         annotations={this.state.annotations}
         authority={this.props.authority}
-        authhash={this.props.authhash}
         buttontext={buttontext}
         selection={this.state.selection}
         oldReference={this.state.selectionAnnotations[referencetype]}
@@ -238,7 +238,7 @@ class Annotate extends React.Component {
       let entitytype = btype;
       return (
           <FlatAnnoBox
-            authhash={this.props.authhash}
+            tradition={this.props.tradition}
             authority={this.props.authority}
             selection={this.state.selection}
             annotations={this.state.annotations}

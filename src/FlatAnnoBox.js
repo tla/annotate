@@ -75,7 +75,7 @@ class FlatAnnoBox extends React.Component {
     const anchorEnd = parseInt(this.props.selection.end.replace('r', ''));
     let method;
     let annotationData;
-    let url = '/api/annotation';
+    let url = '/api/tradition/' + this.props.tradition + '/annotation';
     // If the only difference between the old and the new annotation is the
     // text (and the comment, if any), we are just updating the old annotation.
     let textChangeOnly = false;
@@ -112,8 +112,7 @@ class FlatAnnoBox extends React.Component {
     // Now do whichever form of update was needed
     fetch(url, {
       method: method,
-      headers: {'Content-Type': 'application/json',
-                'X-Authhash': this.props.authhash},
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(annotationData)
     }).then( response => response.json())
     .then( newAnno => {
@@ -139,10 +138,7 @@ class FlatAnnoBox extends React.Component {
   }
 
   deleteOld(existingUrl) {
-    let result = fetch(existingUrl, {
-      method: 'DELETE',
-      headers: {'X-Authhash': this.props.authhash}
-    })
+    let result = fetch(existingUrl, { method: 'DELETE' })
     .then(response => response.json())
     .then(data => data.hasOwnProperty('error')
       ? Promise.reject(new Error(data.error))
@@ -158,7 +154,7 @@ class FlatAnnoBox extends React.Component {
     if (sure) {
       // Call deleteOld just above
       const existing = this.state.oldAnnotation;
-      let result = this.deleteOld('/api/annotation/' + existing.id);
+      let result = this.deleteOld('/api/tradition/' + this.props.tradition + '/annotation/' + existing.id);
       result.then( () => {
         // Close the modal
         this.setState({show: false, oldAnnotation: null});

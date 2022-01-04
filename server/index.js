@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -11,14 +12,15 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(express.static(path.join(__dirname, 'build')));
+app.use(cookieParser());
 
 app.get('/', function(req, res) {
+  console.log('Cookies: ', req.cookies);
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.all('/api/*', (req, res) => {
-  const baseurl = process.env.ENDPOINT + "/tradition/" + process.env.TRADITION + "/";
-  const auth = req.get('X-Authhash');
+  const baseurl = process.env.ENDPOINT + "/";
   const params = {
     method: req.method,
     headers: {
@@ -26,13 +28,10 @@ app.all('/api/*', (req, res) => {
       'Content-Type': 'application/json',
     }
   };
-  if (auth) {
-    params.headers['Authorization'] = 'Basic ' + auth;
-  }
   const url = req.params[0];
   if (url === "test") {
     params.method = 'GET';
-    fetch(baseurl, params)
+    fetch(baseurl + "user/" + process.env.STEMMAREST_USER, params)
       .then(response => {
         if (response.ok) {
           console.log("Test login OK");
@@ -51,9 +50,17 @@ app.all('/api/*', (req, res) => {
       params.body = JSON.stringify(req.body);
     }
 
-    fetch(baseurl + url, params)
+    // HORRIBLE HACK - limit the traditions to the ones belonging to the user
+    // in the environment
+    let fetchurl = baseurl + url;
+    if (url === "traditions") {
+      fetchurl = baseurl + "user/" + process.env.STEMMAREST_USER + "/traditions";
+    }
+    console.log("Requesting " + fetchurl);
+
+    fetch(fetchurl, params)
       .then(response => {
-        console.log("Response: " + response.status);
+        // console.log("Response: " + response.status);
         // Duplicate the status code and the response content
         res.status(response.status);
         // Pass through the appropriate content headers

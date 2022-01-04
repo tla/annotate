@@ -1,7 +1,7 @@
 import React from 'react';
 import Annotate from './Annotate';
 import Login from './Login';
-import base64 from 'base-64';
+// import base64 from 'base-64';
 
 class App extends React.Component {
   constructor(props, context) {
@@ -12,24 +12,21 @@ class App extends React.Component {
     // Set initial state
     this.state = {
       authority: null,
-      authhash: null,
+      tradition: null,
       loggedIn: false,
       loginFailed: false
     }
   }
 
-  setLogin(user, pass) {
-    // Calculate the basic auth hash
-    const authhash = base64.encode(user + ':' + pass);
+  setLogin(user, trad) {
     // Test the login
     fetch('/api/test', {
       method: 'POST',
-      headers: {'X-Authhash': authhash},
       body: JSON.stringify({})
     })
     .then(response => {
       if (response.ok) {
-        this.setState({authority: user, authhash: authhash, loggedIn: true});
+        this.setState({authority: user, tradition: trad, loggedIn: true});
       } else {
         this.setState({loginFailed: true});
       }
@@ -40,8 +37,8 @@ class App extends React.Component {
   render() {
     if (this.state.loggedIn) {
       return <Annotate
-              authhash={this.state.authhash}
               authority={this.state.authority}
+              tradition={this.state.tradition}
              />;
     } else {
       return <Login

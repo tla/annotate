@@ -7,15 +7,36 @@ import Button from 'react-bootstrap/Button';
 
 class Login extends React.Component {
 
+  constructor(props, context) {
+    super(props, context);
+
+    // Set initial state
+    this.state = {
+      user: null,
+      trad: null,
+      tradList: []
+    };
+  }
+
+  componentDidMount() {
+    // Initialise the section list
+    fetch('/api/traditions')
+    .then(response => response.json())
+    .then(data => data.hasOwnProperty('error')
+      ? Promise.reject(new Error(data.error))
+      : this.setState({tradList: data}))
+    .catch(error => alert("Error loading traditions! " + error.message));
+  }
+
   recordUser = event => this.setState({user: event.target.value});
-  recordPass = event => this.setState({pass: event.target.value});
+  recordTrad = event => this.setState({trad: event.target.value});
   setLogin = (e) => {
     // Make sure they are both filled in
-    if (this.state.user && this.state.pass) {
-      this.props.setter(this.state.user, this.state.pass);
+    if (this.state.user && this.state.trad) {
+      this.props.setter(this.state.user, this.state.trad);
     }
     e.preventDefault();
-  }
+  };
 
   // Render a login page and a button to send the state to the annotator
   render() {
@@ -35,7 +56,7 @@ class Login extends React.Component {
           <Container>
             <Row>
               <Col md={3}>
-                <label htmlFor="login-username">User: </label>
+                <label htmlFor="login-username">Your name: </label>
               </Col>
               <Col>
                 <input id="login-username" name="username" onChange={this.recordUser}/>
@@ -43,10 +64,13 @@ class Login extends React.Component {
             </Row>
             <Row>
               <Col md={3}>
-                <label htmlFor="login-password">Passphrase: </label>
+                <label htmlFor="login-tradition">Passphrase: </label>
               </Col>
               <Col>
-                <input id="login-password" name="password" type="password" onChange={this.recordPass}/>
+                <select id="login-tradition" name="tradition" onChange={this.recordTrad}>
+                  <option key="0" value="">Select a tradition...</option>
+                  {this.state.tradList.map(s => <option key={s.id} value={s.id} >{s.name}</option>)}
+                </select>
               </Col>
             </Row>
             <Row>
